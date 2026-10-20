@@ -93,6 +93,55 @@ export class AudioEngine {
     }
   }
 
+  /**
+   * Creates a short, deterministic demo loop on-device after a user action.
+   * No sample data or file bytes are downloaded or uploaded.
+   */
+  async loadDemoTrack(): Promise<LoadedAudioTrack> {
+    this.assertNotDisposed();
+    const context = this.getOrCreateContext();
+    if (context.state === 'suspended') await context.resume();
+
+    const duration = 8;
+    const frameCount = Math.floor(context.sampleRate * duration);
+    const buffer = context.createBuffer(2, frameCount, context.sampleRate);
+    const left = buffer.getChannelData(0);
+    const right = buffer.getChannelData(1);
+    const tau = Math.PI * 2;
+
+    for (let index = 0; index < frameCount; index += 1) {
+      const time = index / context.sampleRate;
+      const kickPhase = time % 0.5;
+      const kickEnvelope = Math.exp(-kickPhase * 23);
+      const kickPhaseAngle = tau * (52 * time - 0.18 * (1 - Math.exp(-kickPhase * 15)));
+      const kick = Math.sin(kickPhaseAngle) * kickEnvelope * 0.52;
+      const bass = Math.sin(tau * 55 * time) * 0.12;
+      const mid = (Math.sin(tau * 220 * time) * 0.07) + (Math.sin(tau * 330 * time) * 0.035);
+      const hatPhase = time % 0.25;
+      const hatEnvelope = Math.exp(-hatPhase * 95);
+      const hat = (Math.sin(tau * 6100 * time) + Math.sin(tau * 7900 * time) * 0.4) * hatEnvelope * 0.025;
+      const clapPhase = (time + 0.25) % 0.5;
+      const clap = Math.sin(tau * 1800 * time) * Math.exp(-clapPhase * 36) * 0.12;
+      const sample = Math.max(-0.98, Math.min(0.98, kick + bass + mid + hat + clap));
+      left[index] = sample;
+      right[index] = sample;
+    }
+
+    this.stopMicrophone();
+    this.stopFileSource();
+    this.buffer = buffer;
+    this.fileOffset = 0;
+    this.playing = false;
+    this.modeValue = 'file';
+    if (this.analysis !== null) resetAudioAnalysis(this.analysis);
+
+    return {
+      duration: buffer.duration,
+      sampleRate: buffer.sampleRate,
+      numberOfChannels: buffer.numberOfChannels,
+    };
+  }
+
   /** Decodes one validated file locally. The file name and bytes are never transmitted. */
   async loadFile(file: File): Promise<LoadedAudioTrack> {
     this.assertNotDisposed();
