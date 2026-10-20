@@ -25,7 +25,7 @@ export interface AudioFrame {
   treble: number;
   level: number;
   beat: boolean;
-  spectrum: Uint8Array;
+  spectrum: Uint8Array<ArrayBuffer>;
 }
 
 export interface AudioAnalysisConfig {
@@ -40,11 +40,11 @@ export interface AudioAnalysisState {
   readonly sampleRate: number;
   readonly fftSize: FftSize;
   readonly frame: AudioFrame;
-  readonly previousSpectrum: Uint8Array;
-  readonly bassPeakWindow: Float32Array;
-  readonly midPeakWindow: Float32Array;
-  readonly treblePeakWindow: Float32Array;
-  readonly fluxWindow: Float32Array;
+  readonly previousSpectrum: Uint8Array<ArrayBuffer>;
+  readonly bassPeakWindow: Float32Array<ArrayBuffer>;
+  readonly midPeakWindow: Float32Array<ArrayBuffer>;
+  readonly treblePeakWindow: Float32Array<ArrayBuffer>;
+  readonly fluxWindow: Float32Array<ArrayBuffer>;
   readonly attack: number;
   readonly release: number;
   readonly autoGain: boolean;
