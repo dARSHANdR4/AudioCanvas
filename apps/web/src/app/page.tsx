@@ -40,7 +40,7 @@ export default function HomePage() {
             <VisualizerArtwork />
             <div className="floating-chip floating-chip--top"><span className="chip-icon chip-icon--cyan">⌁</span><span><strong>Sound in</strong><small>Bass · Mid · Treble</small></span></div>
             <div className="floating-chip floating-chip--bottom"><span className="chip-icon chip-icon--pink">✳</span><span><strong>Art out</strong><small>Limitless possibilities</small></span></div>
-            <p className="hero-visual__disclaimer">STATIC PREVIEW · AUDIO ENGINE COMING IN M1</p>
+            <p className="hero-visual__disclaimer">STATIC PREVIEW · AUDIO INPUT AVAILABLE IN STUDIO</p>
           </div>
         </section>
 
