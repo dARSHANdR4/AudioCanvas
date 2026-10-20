@@ -26,6 +26,7 @@ Record material implementation choices and unresolved specification gaps here. T
 | DEC-015 | The live audio analyser uses a reusable `AudioFrame` and typed-array scratch buffers; band extraction, smoothing, auto-gain and onset logic stay in a pure module. | Live and future offline analysis can invoke the same spectrum-analysis function; no per-frame sample values enter React state. Offline FFT buffer processing is wired during M5 when the encoder/export pipeline is added. | Accepted |
 | DEC-016 | File playback connects the source separately to the analyser and audio destination; microphone sources connect only to the analyser. | This provides audible file playback without routing microphone input to speakers or creating a feedback path. | Accepted |
 | DEC-017 | Browser-native `decodeAudioData` is used for MP3/WAV/FLAC/OGG/M4A decode. | It avoids a second decoder and keeps file bytes local; support depends on the browser codec implementation, and decode failures are presented clearly. | Accepted |
+| DEC-018 | M1 includes a short deterministic demo groove generated into an in-memory AudioBuffer after a user gesture. | Lets a first-time visitor try playback and analysis without a downloaded sample asset or upload; generated samples remain on-device and use no unseeded random values. | Accepted |
 
 ## Deferred items
 
