@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import { Brand } from '../brand';
 import { VisualizerArtwork } from '../visualizer-artwork';
+import { AudioWorkbench } from './audio-workbench';
 
 const sceneCards = [
   { number: '01', name: 'Radial Wave Disk', tag: 'SPECTRUM', className: 'scene-thumb--radial' },
@@ -69,26 +70,20 @@ export function StudioShell() {
               <p className="eyebrow">CANVAS VIEWPORT</p>
               <h1>Your sound, reimagined.</h1>
             </div>
-            <span className="state-pill"><span className="status-dot status-dot--muted" /> ENGINE SCAFFOLD</span>
+            <span className="state-pill"><span className="status-dot status-dot--muted" /> M1 AUDIO CORE</span>
           </div>
           <div className="stage-wrap">
             <VisualizerArtwork label="Static decorative preview. Audio-reactive rendering is not enabled in M0." />
             <div className="stage-center-note">
               <span className="stage-center-note__icon" aria-hidden="true">◌</span>
               <span className="eyebrow">THE CANVAS IS READY</span>
-              <p>Audio analysis arrives in M1. Live rendering begins in M2.</p>
+              <p>Audio analysis is ready. Reactive 3D rendering arrives in M2.</p>
             </div>
             <div className="stage-corner stage-corner--top-left"><span>AC / 001</span><span>16:9</span></div>
             <div className="stage-corner stage-corner--bottom-right"><span>WEBGL2</span><span className="status-dot status-dot--muted" /> NOT INITIALIZED</div>
           </div>
-          <div className="transport-bar" aria-label="Transport controls (not available in M0)">
-            <button aria-label="Play audio (available in M1)" className="transport-play" disabled type="button">▶</button>
-            <div className="transport-time"><strong>00:00</strong><span>/ 00:00</span></div>
-            <div aria-label="Audio timeline unavailable until M1" className="timeline-placeholder" role="img"><span /></div>
-            <button aria-label="Mute audio (available in M1)" className="transport-muted" disabled type="button">◖</button>
-            <span className="transport-label">NO TRACK LOADED</span>
-          </div>
-          <p className="studio-mobile-note">M0 is the interactive shell foundation. Audio, scene rendering and export controls are intentionally disabled until their milestones are implemented.</p>
+          <AudioWorkbench />
+          <p className="studio-mobile-note">Audio file decoding, playback, microphone analysis, and the seekable timeline are enabled in M1. Reactive 3D scenes and export arrive in M2 and M5.</p>
         </section>
 
         <aside aria-label="Customization panels" className="studio-inspector">
@@ -129,7 +124,7 @@ export function StudioShell() {
           </section>
         </aside>
       </div>
-      <footer className="studio-statusbar"><span><span className="status-dot status-dot--muted" /> M0 · SHELL READY</span><span>60 FPS TARGET</span><span>LOCAL-FIRST BY DESIGN</span><Link href="/legal/photosensitivity">Photosensitivity notice</Link></footer>
+      <footer className="studio-statusbar"><span><span className="status-dot status-dot--muted" /> M1 · AUDIO CORE ENABLED</span><span>60 FPS TARGET</span><span>LOCAL-FIRST BY DESIGN</span><Link href="/legal/photosensitivity">Photosensitivity notice</Link></footer>
     </main>
   );
 }

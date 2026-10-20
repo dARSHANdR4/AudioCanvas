@@ -20,6 +20,13 @@ Record material implementation choices and unresolved specification gaps here. T
 | DEC-012 | M0 validation uses named smoke tests rather than `TC-00*` IDs. | The provided test roadmap starts its numbered test cases at TC-01 for M1; the M0 shell still receives route, safe-URL, first-run notice and automated accessibility smoke coverage. | Accepted |
 | DEC-013 | Exclude `apps/web/vitest.config.ts` from the Next.js app TypeScript include set. | Vitest configuration is build tooling, not an application module; excluding it prevents production type checks from depending on test-runner packages that may not be installed for the app root. Unit tests still load the config through Vitest. | Accepted |
 
+## M1 decisions
+
+| DEC-014 | Audio input validation uses a shared Zod metadata schema plus an explicit extension/MIME allowlist. | The browser decoder is invoked only for supported audio formats up to 100 MB; malformed, empty, mismatched, or oversized selections receive actionable messages. | Accepted |
+| DEC-015 | The live audio analyser uses a reusable `AudioFrame` and typed-array scratch buffers; band extraction, smoothing, auto-gain and onset logic stay in a pure module. | Live and future offline analysis can invoke the same spectrum-analysis function; no per-frame sample values enter React state. Offline FFT buffer processing is wired during M5 when the encoder/export pipeline is added. | Accepted |
+| DEC-016 | File playback connects the source separately to the analyser and audio destination; microphone sources connect only to the analyser. | This provides audible file playback without routing microphone input to speakers or creating a feedback path. | Accepted |
+| DEC-017 | Browser-native `decodeAudioData` is used for MP3/WAV/FLAC/OGG/M4A decode. | It avoids a second decoder and keeps file bytes local; support depends on the browser codec implementation, and decode failures are presented clearly. | Accepted |
+
 ## Deferred items
 
 - Worker-based WebCodecs/OffscreenCanvas support and codec fallback behavior will be designed and tested in M5.

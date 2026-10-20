@@ -5,7 +5,8 @@
   "type": "module",
   "exports": {
     "./schemas/preset-short-id": "./src/schemas/preset-short-id.ts",
-    "./schemas/legal-slug": "./src/schemas/legal-slug.ts"
+    "./schemas/legal-slug": "./src/schemas/legal-slug.ts",
+    "./schemas/audio-file": "./src/schemas/audio-file.ts"
   },
   "dependencies": {
     "zod": "^4.1.12"
