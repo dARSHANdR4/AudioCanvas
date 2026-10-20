@@ -130,6 +130,27 @@ export function AudioWorkbench() {
     }
   }, [getEngine, stopMeterLoop]);
 
+  const loadDemoTrack = useCallback(async () => {
+    setError('');
+    setBusy(true);
+    stopMeterLoop();
+    try {
+      const engine = getEngine();
+      const track = await engine.loadDemoTrack();
+      setFileName('AudioCanvas demo track');
+      setDuration(track.duration);
+      setCurrentTime(0);
+      setIsPlaying(false);
+      setIsMicrophoneOn(false);
+      setDevices([]);
+      drawWaveform(waveformRef.current, engine);
+    } catch (caught) {
+      setError(getErrorMessage(caught));
+    } finally {
+      setBusy(false);
+    }
+  }, [getEngine, stopMeterLoop]);
+
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.currentTarget.files?.[0];
     void loadAudioFile(file);
@@ -312,6 +333,14 @@ export function AudioWorkbench() {
           >
             <span aria-hidden="true">{isMicrophoneOn ? '■' : '◉'}</span>
             {isMicrophoneOn ? 'Stop microphone' : 'Enable microphone'}
+          </button>
+          <button
+            className="button button--ghost button--small"
+            type="button"
+            disabled={busy}
+            onClick={() => void loadDemoTrack()}
+          >
+            Use demo track
           </button>
           {devices.length > 1 && isMicrophoneOn ? (
             <label className="microphone-device">
