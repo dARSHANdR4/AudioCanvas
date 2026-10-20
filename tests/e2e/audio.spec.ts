@@ -16,6 +16,16 @@ function createFiveMinuteSilentMp3(): Buffer {
 }
 
 test.describe('M1 audio core', () => {
+  test('loads the built-in demo track without a network audio asset', async ({ page }) => {
+    await page.goto('/studio');
+    await page.getByRole('button', { name: 'Use demo track' }).click();
+
+    await expect(page.getByText('AudioCanvas demo track')).toBeVisible();
+    await expect(page.locator('.audio-time--duration')).toHaveText('00:08');
+    await expect(page.getByRole('button', { name: 'Play audio' })).toBeEnabled();
+  });
+
+
   test('TC-01: decodes a five-minute MP3 and displays a 05:00 timeline', async ({ page }) => {
     await page.goto('/studio');
     await page.locator('#audio-file-input').setInputFiles({
