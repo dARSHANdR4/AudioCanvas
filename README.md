@@ -28,44 +28,47 @@ A browser-based visualizer studio concept for turning music into color, motion, 
 
 > **Project type:** Browser-based visualizer studio  
 > **Builder:** [dARSHANdR4](https://github.com/dARSHANdR4)  
-> **Current milestone:** M0 — application shell  
+> **Current milestone:** M1 — Audio Core (in progress)  
 > **Build philosophy:** Useful first. Reliable always. Keep shipping.
 
 AudioCanvas is an early-stage project for creating a no-code, sound-reactive visualizer experience. The long-term idea is to let people shape visuals with audio, scene choices, mappings, and effects — without writing shaders.
 
-**Current status, clearly:** the live site is the M0 shell. Its hero artwork is a static CSS/SVG preview; real audio analysis and reactive 3D rendering have not been implemented yet. The roadmap below separates what exists today from what is planned.
+**Current status, clearly:** M0 is complete and M1 audio input/analysis is being implemented. The landing/studio artwork remains a static CSS/SVG preview; reactive Three.js scenes are planned for M2. The roadmap below separates working features from planned work.
 
 ## 🟩 LIVE BUILD
 
 | Destination | What you'll find |
 |---|---|
 | [🟢 **Live website**](https://audiocanvas-darshandr4s-projects.vercel.app/) | Landing page and project introduction |
-| [🎛️ **Open Studio**](https://audiocanvas-darshandr4s-projects.vercel.app/studio) | Responsive studio shell; engine controls are not functional yet |
+| [🎛️ **Open Studio**](https://audiocanvas-darshandr4s-projects.vercel.app/studio) | Local audio file/demo playback, mic input, seekable timeline and audio-analysis meters; reactive 3D scenes come in M2 |
 | [🖼️ **Gallery**](https://audiocanvas-darshandr4s-projects.vercel.app/gallery) | Gallery route and empty state |
 | [👤 **My Presets**](https://audiocanvas-darshandr4s-projects.vercel.app/me) | Presets/account placeholder |
 | [🧪 **CI runs**](https://github.com/dARSHANdR4/AudioCanvas/actions) | Lint, TypeScript, unit tests, build, and browser checks |
 
 <img src="https://raw.githubusercontent.com/dARSHANdR4/dARSHANdR4/main/assets/minecraft-emerald-divider.svg?v=2" width="100%" alt="Emerald pixel divider">
 
-## 🎛️ WHAT'S BUILT IN M0
+## 🎛️ WHAT'S BUILT SO FAR (M0–M1)
 
 - **Responsive application shell** using the Next.js App Router and a dark, neon-inspired visual system.
 - **Public routes** for the landing page, Studio, Gallery, My Presets, shared-preset links, and legal pages.
 - **Route validation** for approved legal slugs and preset short IDs.
 - **Photosensitivity notice** that visitors can dismiss; the dismissal is stored locally in the browser.
+- **M1 audio workbench:** local MP3/WAV/FLAC/OGG/M4A decode (up to 100 MB), drag-and-drop, an 8-second deterministic browser-generated demo track, play/pause, seekable timeline and waveform preview.
+- **Microphone input:** gesture-gated permission request, human-readable permission errors, optional input-device selection, and no microphone-to-speaker routing.
+- **Live analysis:** configurable FFT size (256/512/1024/2048), Bass/Mid/Treble/Level meters, smoothing, rolling auto-gain and onset/beat detection using reusable typed arrays outside React state.
 - **Quality gates** for linting, strict TypeScript, unit tests, production builds, and Playwright smoke tests.
 - **Project documentation** covering product requirements, UX, architecture, engineering decisions, and the test roadmap.
 
 ### Current boundaries
 
-M0 is a foundation, not the finished visualizer. The live app does **not yet** provide working microphone/file audio analysis, reactive 3D scenes, scene/mapping controls, cloud accounts, save/share persistence, or video export. These belong to later milestones. The privacy goal is to keep user audio on-device; audio processing itself is still future work.
+Audio input and analysis are now wired into the M1 Studio, but AudioCanvas is not yet the finished visualizer. Reactive Three.js scenes, real scene switching, audio-to-visual mapping controls, cloud accounts, persistent presets/sharing, and video export are not implemented yet. Those belong to M2–M6. User files and microphone audio are processed locally and are not uploaded.
 
 ## 🗺️ NEXT QUESTS — ROADMAP
 
 | Milestone | Planned work | Status |
 |---|---|---|
 | **M0 · Shell** | Repository, responsive routes, design tokens, docs, CI, smoke tests, deployment | ✅ Complete |
-| **M1 · Audio core** | Audio upload/microphone, analyser, frequency bands, timeline | 🧭 Planned |
+| **M1 · Audio core** | Audio upload/microphone, analyser, frequency bands, beat detection, timeline and demo track | 🟡 In progress — TC-01–TC-05 verification |
 | **M2 · Render core** | Rendering engine and starter visual scenes | 🧭 Planned |
 | **M3 · Customization** | Audio-to-visual mappings, themes, effects, undo/redo | 🧭 Planned |
 | **M4 · Presets** | Local presets and shareable URLs | 🧭 Planned |
