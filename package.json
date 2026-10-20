@@ -1,0 +1,36 @@
+{
+  "name": "audiocanvas",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "workspaces": [
+    "apps/web",
+    "packages/shared"
+  ],
+  "scripts": {
+    "dev": "npm run dev --workspace=@audiocanvas/web",
+    "build": "npm run build --workspace=@audiocanvas/web",
+    "start": "npm run start --workspace=@audiocanvas/web",
+    "lint": "npm run lint --workspace=@audiocanvas/web",
+    "typecheck": "npm run typecheck --workspace=@audiocanvas/web",
+    "test:unit": "npm run test:unit --workspace=@audiocanvas/web",
+    "test:e2e": "npm run test:e2e --workspace=@audiocanvas/web",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "check": "npm run lint && npm run typecheck && npm run test:unit && npm run build",
+    "check:all": "npm run format:check && npm run check && npm run test:e2e"
+  },
+  "devDependencies": {
+    "@axe-core/playwright": "^4.10.3",
+    "@playwright/test": "^1.55.0",
+    "eslint": "^9.37.0",
+    "eslint-config-next": "^16.0.0",
+    "eslint-config-prettier": "^10.1.8",
+    "prettier": "^3.6.2",
+    "typescript": "^5.9.3",
+    "vitest": "^4.1.11"
+  },
+  "overrides": {
+    "typescript-eslint": "8.71.2"
+  }
+}
