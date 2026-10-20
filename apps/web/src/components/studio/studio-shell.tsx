@@ -73,7 +73,7 @@ export function StudioShell() {
             <span className="state-pill"><span className="status-dot status-dot--muted" /> M1 AUDIO CORE</span>
           </div>
           <div className="stage-wrap">
-            <VisualizerArtwork label="Static decorative preview. Audio-reactive rendering is not enabled in M0." />
+            <VisualizerArtwork label="Static decorative preview. Audio-reactive 3D rendering is planned for M2." />
             <div className="stage-center-note">
               <span className="stage-center-note__icon" aria-hidden="true">◌</span>
               <span className="eyebrow">THE CANVAS IS READY</span>
