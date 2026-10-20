@@ -18,6 +18,7 @@ Record material implementation choices and unresolved specification gaps here. T
 | DEC-010 | Defer Zustand, Three.js, `fft.js`, `mp4-muxer`, database drivers/ORM, Auth.js, and S3/Redis clients until their owning milestones. | Installing unused runtime dependencies in M0 conflicts with the no-unused-dependencies rule; the stack selection itself remains unchanged. | Accepted |
 | DEC-011 | CI uses `npm install` while this starter is delivered without a generated lockfile. | Package-registry DNS is unavailable in the current build environment, so a complete lockfile cannot be generated here. CI will generate the lock as part of dependency resolution; commit `package-lock.json` after the first successful install in a network-enabled environment. | Temporary; lockfile required before production |
 | DEC-012 | M0 validation uses named smoke tests rather than `TC-00*` IDs. | The provided test roadmap starts its numbered test cases at TC-01 for M1; the M0 shell still receives route, safe-URL, first-run notice and automated accessibility smoke coverage. | Accepted |
+| DEC-013 | Exclude `apps/web/vitest.config.ts` from the Next.js app TypeScript include set. | Vitest configuration is build tooling, not an application module; excluding it prevents production type checks from depending on test-runner packages that may not be installed for the app root. Unit tests still load the config through Vitest. | Accepted |
 
 ## Deferred items
 
