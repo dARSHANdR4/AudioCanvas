@@ -31,7 +31,7 @@ export class AudioEngine {
   private context: AudioContext | null = null;
   private analyser: AnalyserNode | null = null;
   private analysis: AudioAnalysisState | null = null;
-  private timeDomain: Float32Array | null = null;
+  private timeDomain: Float32Array<ArrayBuffer> | null = null;
   private buffer: AudioBuffer | null = null;
   private fileSource: AudioBufferSourceNode | null = null;
   private microphoneStream: MediaStream | null = null;
