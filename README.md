@@ -191,3 +191,6 @@ See [<code>COPYRIGHT</code>](COPYRIGHT) for the dedicated notice.
 <sub>Make something you can feel. ◈</sub>
 
 </div>
+
+
+For the full copyright and permissions notice, see [COPYRIGHT](./COPYRIGHT).
