@@ -1,0 +1,10 @@
+{
+  "name": "@audiocanvas/shared",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    "./schemas/legal-slug": "./src/schemas/legal-slug.ts",
+    "./schemas/preset-short-id": "./src/schemas/preset-short-id.ts"
+  }
+}
