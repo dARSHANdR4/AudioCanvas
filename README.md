@@ -1,76 +1,190 @@
+<div align="center">
+
+<img src="https://raw.githubusercontent.com/dARSHANdR4/AudioCanvas/main/apps/web/src/app/icon.svg" width="88" alt="AudioCanvas equalizer icon">
+
 # AudioCanvas
 
-A browser-based, no-code, sound-reactive visualizer studio inspired by Winamp and MilkDrop.
-Audio is designed to remain on-device; user audio is never uploaded to the backend.
+### SOUND IN · VISUALS OUT
 
-## Milestone status
+A browser-based visualizer studio concept for turning music into color, motion, and light — inspired by Winamp and MilkDrop.
 
-**M0 — Repository setup and application shell.** This milestone establishes the monorepo, Next.js App Router, TypeScript strict mode, Tailwind CSS design tokens, lint/format/typecheck/unit-test tooling, Playwright smoke tests, CI, source documentation, and the first set of responsive routes. Audio analysis, Three.js rendering, scene switching, presets, authentication, and export are intentionally not implemented in M0.
+<p>
+  <a href="https://audiocanvas-darshandr4s-projects.vercel.app/"><img src="https://img.shields.io/badge/OPEN_LIVE_BUILD-245b32?style=for-the-badge&logo=vercel&logoColor=white" alt="Open live AudioCanvas build"></a>
+  <a href="https://github.com/dARSHANdR4/AudioCanvas/actions/workflows/ci.yml"><img src="https://img.shields.io/github/actions/workflow/status/dARSHANdR4/AudioCanvas/ci.yml?branch=main&style=for-the-badge&label=CI&logo=githubactions&logoColor=white" alt="GitHub Actions CI status"></a>
+  <a href="https://github.com/dARSHANdR4"><img src="https://img.shields.io/badge/BUILDER-dARSHANdR4-337b3e?style=for-the-badge&logo=github&logoColor=white" alt="Built by dARSHANdR4"></a>
+</p>
 
-## Requirements covered by M0
+<p>
+  <a href="https://audiocanvas-darshandr4s-projects.vercel.app/studio">Open Studio</a> ·
+  <a href="https://audiocanvas-darshandr4s-projects.vercel.app/gallery">Explore Gallery</a> ·
+  <a href="https://github.com/dARSHANdR4/AudioCanvas">Source Code</a>
+</p>
 
-- PRD: route and studio-shell foundation for US-03/US-04/US-09/US-10/US-11/US-12; no functional completion claimed for those stories yet.
-- SRS: Zod validation for route parameters and tooling/accessibility foundations for NFR-07 and NFR-11; full NFR compliance is not claimed in M0.
-- UX: routes `/`, `/studio`, `/gallery`, `/me`, `/p/{shortId}`, and `/legal/{slug}`; dark neon design tokens, accessible labels, responsive shell.
-- Architecture: the `apps/web` plus `packages/shared` monorepo layout and the documentation's engine boundaries.
-- Test roadmap: M0 smoke checks. TC-01 through TC-05 remain M1 exit criteria.
+</div>
 
-## Requirements
+<img src="https://raw.githubusercontent.com/dARSHANdR4/dARSHANdR4/main/assets/minecraft-emerald-divider.svg?v=4" width="100%" alt="Emerald pixel divider">
 
-- Node.js 22 (see `.nvmrc`)
-- npm 10 or newer
+## 🧱 PROJECT PROFILE
 
-## Install and run
+> **Project type:** Browser-based visualizer studio  
+> **Builder:** [dARSHANdR4](https://github.com/dARSHANdR4)  
+> **Current milestone:** M0 — application shell  
+> **Build philosophy:** Useful first. Reliable always. Keep shipping.
 
-```bash
+AudioCanvas is an early-stage project for creating a no-code, sound-reactive visualizer experience. The long-term idea is to let people shape visuals with audio, scene choices, mappings, and effects — without writing shaders.
+
+**Current status, clearly:** the live site is the M0 shell. Its hero artwork is a static CSS/SVG preview; real audio analysis and reactive 3D rendering have not been implemented yet. The roadmap below separates what exists today from what is planned.
+
+## 🟩 LIVE BUILD
+
+| Destination | What you'll find |
+|---|---|
+| [🟢 **Live website**](https://audiocanvas-darshandr4s-projects.vercel.app/) | Landing page and project introduction |
+| [🎛️ **Open Studio**](https://audiocanvas-darshandr4s-projects.vercel.app/studio) | Responsive studio shell; engine controls are not functional yet |
+| [🖼️ **Gallery**](https://audiocanvas-darshandr4s-projects.vercel.app/gallery) | Gallery route and empty state |
+| [👤 **My Presets**](https://audiocanvas-darshandr4s-projects.vercel.app/me) | Presets/account placeholder |
+| [🧪 **CI runs**](https://github.com/dARSHANdR4/AudioCanvas/actions) | Lint, TypeScript, unit tests, build, and browser checks |
+
+<img src="https://raw.githubusercontent.com/dARSHANdR4/dARSHANdR4/main/assets/minecraft-emerald-divider.svg?v=2" width="100%" alt="Emerald pixel divider">
+
+## 🎛️ WHAT'S BUILT IN M0
+
+- **Responsive application shell** using the Next.js App Router and a dark, neon-inspired visual system.
+- **Public routes** for the landing page, Studio, Gallery, My Presets, shared-preset links, and legal pages.
+- **Route validation** for approved legal slugs and preset short IDs.
+- **Photosensitivity notice** that visitors can dismiss; the dismissal is stored locally in the browser.
+- **Quality gates** for linting, strict TypeScript, unit tests, production builds, and Playwright smoke tests.
+- **Project documentation** covering product requirements, UX, architecture, engineering decisions, and the test roadmap.
+
+### Current boundaries
+
+M0 is a foundation, not the finished visualizer. The live app does **not yet** provide working microphone/file audio analysis, reactive 3D scenes, scene/mapping controls, cloud accounts, save/share persistence, or video export. These belong to later milestones. The privacy goal is to keep user audio on-device; audio processing itself is still future work.
+
+## 🗺️ NEXT QUESTS — ROADMAP
+
+| Milestone | Planned work | Status |
+|---|---|---|
+| **M0 · Shell** | Repository, responsive routes, design tokens, docs, CI, smoke tests, deployment | ✅ Complete |
+| **M1 · Audio core** | Audio upload/microphone, analyser, frequency bands, timeline | 🧭 Planned |
+| **M2 · Render core** | Rendering engine and starter visual scenes | 🧭 Planned |
+| **M3 · Customization** | Audio-to-visual mappings, themes, effects, undo/redo | 🧭 Planned |
+| **M4 · Presets** | Local presets and shareable URLs | 🧭 Planned |
+| **M5 · Export** | Browser-based video export and progress/cancel flow | 🧭 Planned |
+| **M6 · Backend** | Authentication, cloud presets, gallery APIs, storage | 🧭 Planned |
+| **M7 · Launch** | Hardening, accessibility/performance review, launch checklist | 🧭 Planned |
+
+Milestones are roadmap targets, not claims that these features already ship.
+
+## ⛏️ TOOL INVENTORY
+
+<div align="center">
+
+![Next.js](https://img.shields.io/badge/NEXT.JS-11111a?style=for-the-badge&logo=nextdotjs&logoColor=white)
+![React](https://img.shields.io/badge/REACT-11111a?style=for-the-badge&logo=react&logoColor=61dafb)
+![TypeScript](https://img.shields.io/badge/TYPESCRIPT-18331e?style=for-the-badge&logo=typescript&logoColor=8bcaff)
+![Tailwind CSS](https://img.shields.io/badge/TAILWIND_CSS-18331e?style=for-the-badge&logo=tailwindcss&logoColor=8eff76)
+![Vitest](https://img.shields.io/badge/VITEST-14271a?style=for-the-badge&logo=vitest&logoColor=8eff76)
+![Playwright](https://img.shields.io/badge/PLAYWRIGHT-14271a?style=for-the-badge&logo=playwright&logoColor=8eff76)
+![GitHub Actions](https://img.shields.io/badge/GITHUB_ACTIONS-14271a?style=for-the-badge&logo=githubactions&logoColor=8eff76)
+![Vercel](https://img.shields.io/badge/VERCEL-14271a?style=for-the-badge&logo=vercel&logoColor=white)
+
+</div>
+
+**Core setup:** Next.js App Router, React, strict TypeScript, Tailwind CSS, npm workspaces, Vitest, Playwright, ESLint, and Prettier.
+
+<img src="https://raw.githubusercontent.com/dARSHANdR4/dARSHANdR4/main/assets/minecraft-emerald-divider.svg?v=2" width="100%" alt="Emerald pixel divider">
+
+## 🚀 RUN IT LOCALLY
+
+### Requirements
+
+- **Node.js 22** (see <code>.nvmrc</code>)
+- **npm 10 or newer**
+
+### Start the development server
+
+~~~bash
+git clone https://github.com/dARSHANdR4/AudioCanvas.git
+cd AudioCanvas
 npm install
 npm run dev
-```
+~~~
 
-Open <http://localhost:3000>.
+Open [http://localhost:3000](http://localhost:3000).
 
-## Quality checks
+### Quality checks
 
-```bash
+~~~bash
 npm run lint
 npm run typecheck
 npm run test:unit
 npm run build
 npm run test:e2e
 npm run format:check
-```
+~~~
 
-Run `npm run format` before `npm run check:all` to apply the repository formatter. Playwright installs Chromium separately when needed:
+To run the browser tests on a fresh machine, install Playwright's Chromium browser first:
 
-```bash
+~~~bash
 npx playwright install chromium
-```
+~~~
 
-## Routes in M0
+## 📁 REPOSITORY MAP
 
-- `/` — landing page and product introduction
-- `/studio` — responsive studio frame with non-functional, clearly disabled engine controls
-- `/gallery` — community gallery empty state
-- `/me` — saved presets/account empty state
-- `/p/{shortId}` — validated shared-preset route shell
-- `/legal/terms`, `/legal/privacy`, `/legal/photosensitivity` — legal content placeholders to be reviewed before launch
+~~~text
+AudioCanvas/
+├── apps/
+│   └── web/                 # Next.js application and routes
+├── packages/
+│   └── shared/              # Shared validation schemas
+├── docs/                    # Product, UX, architecture, decisions, test roadmap
+├── tests/
+│   ├── unit/                # Unit tests
+│   └── e2e/                 # Browser smoke tests
+├── .github/workflows/       # CI workflow
+├── COPYRIGHT                # Copyright and permissions notice
+└── README.md
+~~~
 
-The visualizer art in M0 is a decorative, CSS/SVG preview only; it is not an audio-reactive renderer. Audio and rendering arrive in later milestones. A first-visit photosensitivity notice is dismissible and stored locally. M0 smoke tests cover route shells, invalid share IDs and an axe accessibility scan.
+## 📚 PROJECT DOCUMENTATION
 
-## Environment setup
+The <code>docs/</code> directory is the reference for scope and design:
 
-M0 does not require API keys, OAuth credentials, database access, or `.env` configuration. `.env.example` documents variables reserved for M6; fill them only when those integrations are implemented. Do not expose server secrets through `NEXT_PUBLIC_*` variables.
+- [Product Requirements (PRD)](docs/PRD.md)
+- [Software Requirements (SRS)](docs/SRS.md)
+- [User Experience (UX)](docs/UX.md)
+- [System Architecture](docs/ARCHITECTURE.md)
+- [Engineering Decisions](docs/DECISIONS.md)
+- [Test Roadmap](docs/TEST_ROADMAP.md)
+- [Backend Plan](docs/BACKEND.md)
 
-## Documentation
+## 🟩 BUILD PRINCIPLES
 
-The six source-of-truth specifications are in [`docs/`](docs/). `ARCHITECTURE.md` and `TEST_ROADMAP.md` are derived from Parts 5 and 6 of the provided AudioCanvas documentation pack. `DECISIONS.md` records implementation choices made under the documented precedence rules.
+- 🎨 **Visuals first:** keep the interface focused and the controls understandable.
+- 🧪 **Test it:** run quality checks before calling a milestone complete.
+- 🔒 **Privacy by design:** the intended audio workflow is on-device.
+- ♿ **Accessibility matters:** keep labels, navigation, and motion safety in scope.
+- 🛠️ **Be honest about progress:** planned features stay labelled as planned until implemented.
 
-## Copyright and permissions
+<img src="https://raw.githubusercontent.com/dARSHANdR4/dARSHANdR4/main/assets/minecraft-emerald-divider.svg?v=4" width="100%" alt="Emerald pixel divider">
+
+## © COPYRIGHT & PERMISSIONS
 
 **Copyright © 2026 dARSHANdR4. All rights reserved.**
 
-Unless otherwise stated, the source code and original assets in this repository are owned by dARSHANdR4. No separate software license is granted to use, reproduce, modify, distribute, sublicense, or create derivative works from the project. Requests for permissions beyond the uses permitted by applicable law and GitHub's platform terms must be made to the copyright holder in writing.
+Unless otherwise stated, the source code and original assets in this repository are owned by [dARSHANdR4](https://github.com/dARSHANdR4). No separate software license is granted to use, reproduce, modify, distribute, sublicense, or create derivative works from the project. Permission beyond uses permitted by applicable law and GitHub's platform terms must be requested from the copyright holder in writing.
 
-This repository is intentionally public for portfolio and showcase purposes. Under GitHub's Terms of Service, users may view and fork public repositories through GitHub. This notice does not disable GitHub's public-fork functionality and is not a claim that it does.
+This repository is intentionally public for portfolio and showcase purposes. GitHub allows viewing and forking public repositories under its Terms of Service; this notice does not disable that platform functionality. There is no open-source license for this project.
 
-See [`COPYRIGHT`](COPYRIGHT) for the dedicated notice. There is no open-source license for this project.
+See [<code>COPYRIGHT</code>](COPYRIGHT) for the dedicated notice.
+
+<div align="center">
+
+### 🌿 IDEA → CRAFT → TEST → SHIP → REPEAT
+
+<a href="https://github.com/dARSHANdR4"><img src="https://img.shields.io/badge/BUILT_BY-dARSHANdR4-245b32?style=for-the-badge&logo=github&logoColor=8eff76" alt="Built by dARSHANdR4"></a>
+<a href="https://audiocanvas-darshandr4s-projects.vercel.app/"><img src="https://img.shields.io/badge/TRY_AUDIOCANVAS-337b3e?style=for-the-badge&logo=vercel&logoColor=white" alt="Try AudioCanvas"></a>
+
+<sub>Make something you can feel. ◈</sub>
+
+</div>
