@@ -59,8 +59,18 @@ The visualizer art in M0 is a decorative, CSS/SVG preview only; it is not an aud
 
 ## Environment setup
 
-This delivery has no `package-lock.json` because package registry DNS failed in the build environment. Run `npm install` in a network-enabled environment and commit the generated lockfile before production. M0 does not require API keys, OAuth credentials, database access, or `.env` configuration. `.env.example` documents variables reserved for M6; fill them only when those integrations are implemented. Do not expose server secrets through `NEXT_PUBLIC_*` variables.
+M0 does not require API keys, OAuth credentials, database access, or `.env` configuration. `.env.example` documents variables reserved for M6; fill them only when those integrations are implemented. Do not expose server secrets through `NEXT_PUBLIC_*` variables.
 
 ## Documentation
 
 The six source-of-truth specifications are in [`docs/`](docs/). `ARCHITECTURE.md` and `TEST_ROADMAP.md` are derived from Parts 5 and 6 of the provided AudioCanvas documentation pack. `DECISIONS.md` records implementation choices made under the documented precedence rules.
+
+## Copyright and permissions
+
+**Copyright © 2026 dARSHANdR4. All rights reserved.**
+
+Unless otherwise stated, the source code and original assets in this repository are owned by dARSHANdR4. No separate software license is granted to use, reproduce, modify, distribute, sublicense, or create derivative works from the project. Requests for permissions beyond the uses permitted by applicable law and GitHub's platform terms must be made to the copyright holder in writing.
+
+This repository is intentionally public for portfolio and showcase purposes. Under GitHub's Terms of Service, users may view and fork public repositories through GitHub. This notice does not disable GitHub's public-fork functionality and is not a claim that it does.
+
+See [`COPYRIGHT`](COPYRIGHT) for the dedicated notice. There is no open-source license for this project.
