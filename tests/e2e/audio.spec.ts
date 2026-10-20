@@ -37,7 +37,7 @@ test.describe('M1 audio core', () => {
       buffer: Buffer.from('not audio'),
     });
 
-    await expect(page.getByRole('alert')).toContainText('Unsupported file type');
+    await expect(page.locator('.audio-error')).toContainText('Unsupported file type');
     await expect(page.getByRole('heading', { name: 'Your sound, reimagined.' })).toBeVisible();
   });
 
@@ -56,7 +56,7 @@ test.describe('M1 audio core', () => {
     await page.goto('/studio');
     await page.getByRole('button', { name: 'Enable microphone' }).click();
 
-    await expect(page.getByRole('alert')).toContainText('Microphone permission was denied');
+    await expect(page.locator('.audio-error')).toContainText('Microphone permission was denied');
     await expect(page.getByLabel('Choose audio file')).toBeAttached();
   });
 });
