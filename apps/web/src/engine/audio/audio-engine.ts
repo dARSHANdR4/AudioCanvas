@@ -102,14 +102,19 @@ export class AudioEngine {
     const context = this.getOrCreateContext();
     if (context.state === 'suspended') await context.resume();
 
-    const duration = 8;
-    const frameCount = Math.floor(context.sampleRate * duration);
+    const loopDuration = 8;
+    // Repeat one seamless deterministic groove four times so the demo lasts long enough to
+    // exercise scene switching without the short sample ending during a slower renderer startup.
+    const duration = 32;
+    const loopFrameCount = Math.floor(context.sampleRate * loopDuration);
+    const frameCount = loopFrameCount * Math.floor(duration / loopDuration);
     const buffer = context.createBuffer(2, frameCount, context.sampleRate);
     const left = buffer.getChannelData(0);
     const right = buffer.getChannelData(1);
+    const loopSamples = new Float32Array(loopFrameCount);
     const tau = Math.PI * 2;
 
-    for (let index = 0; index < frameCount; index += 1) {
+    for (let index = 0; index < loopFrameCount; index += 1) {
       const time = index / context.sampleRate;
       const kickPhase = time % 0.5;
       const kickEnvelope = Math.exp(-kickPhase * 23);
@@ -122,9 +127,14 @@ export class AudioEngine {
       const hat = (Math.sin(tau * 6100 * time) + Math.sin(tau * 7900 * time) * 0.4) * hatEnvelope * 0.025;
       const clapPhase = (time + 0.25) % 0.5;
       const clap = Math.sin(tau * 1800 * time) * Math.exp(-clapPhase * 36) * 0.12;
-      const sample = Math.max(-0.98, Math.min(0.98, kick + bass + mid + hat + clap));
-      left[index] = sample;
-      right[index] = sample;
+      loopSamples[index] = Math.max(-0.98, Math.min(0.98, kick + bass + mid + hat + clap));
+    }
+
+    for (let offset = 0; offset < frameCount; offset += loopFrameCount) {
+      const count = Math.min(loopFrameCount, frameCount - offset);
+      const samples = loopSamples.subarray(0, count);
+      left.set(samples, offset);
+      right.set(samples, offset);
     }
 
     this.stopMicrophone();
