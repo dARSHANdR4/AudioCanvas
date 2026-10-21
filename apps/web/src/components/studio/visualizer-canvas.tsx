@@ -4,6 +4,7 @@ import { useEffect, useRef } from 'react';
 import * as THREE from 'three';
 import { readLatestAudioFrame } from '@/engine/audio/audio-frame-store';
 import { createScene, SCENE_OPTIONS, type SceneId } from '@/engine/scenes/scene-registry';
+import { initialQualityForConcurrency } from '@/engine/scenes/render-quality';
 import { getSelectedScene, subscribeToSceneSelection } from '@/engine/scenes/scene-selection-store';
 import {
   DEFAULT_SCENE_PARAMS,
@@ -48,7 +49,7 @@ export function VisualizerCanvas() {
     let animationFrame = 0;
     let activeScene: Scene | null = null;
     let renderContext: RenderContext | null = null;
-    let quality: QualityTier = 'high';
+    let quality: QualityTier = 'medium';
     let slowFrameSeconds = 0;
     let lastFrameTime = performance.now();
     let listenerAdded = false;
@@ -93,6 +94,10 @@ export function VisualizerCanvas() {
     };
 
     try {
+      // Avoid starting a 100k-particle shader on small-core/low-power devices. High quality
+      // remains available on stronger devices, and the existing frame-time monitor can degrade it.
+      quality = initialQualityForConcurrency(window.navigator.hardwareConcurrency);
+      host.dataset.quality = quality;
       renderer = new THREE.WebGLRenderer({
         alpha: true,
         antialias: true,
