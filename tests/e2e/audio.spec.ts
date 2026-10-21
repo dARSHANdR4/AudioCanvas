@@ -19,7 +19,8 @@ test.describe('M2 render core', () => {
   test('switches all three live scenes without interrupting audio playback', async ({ page }) => {
     await page.goto('/studio');
 
-    const canvas = page.getByRole('img', { name: 'Audio-reactive radial wave disk' });
+    await expect(page.getByRole('img', { name: 'Audio-reactive radial wave disk' })).toBeVisible();
+    const canvas = page.locator('.visualizer-canvas');
     await expect(canvas).toBeVisible();
     await expect(canvas).toHaveAttribute('data-render-status', 'ready', { timeout: 10_000 });
     await expect(canvas).toHaveAttribute('data-scene', 'radial-wave-disk');
