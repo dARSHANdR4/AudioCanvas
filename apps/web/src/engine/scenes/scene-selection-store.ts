@@ -16,5 +16,5 @@ export function selectScene(sceneId: SceneId): void {
 
 export function subscribeToSceneSelection(listener: SceneListener): () => void {
   listeners.add(listener);
-  return () => listeners.delete(listener);
+  return () => { listeners.delete(listener); };
 }
