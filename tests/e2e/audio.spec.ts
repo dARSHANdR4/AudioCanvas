@@ -54,7 +54,7 @@ test.describe('M1 audio core', () => {
     await page.getByRole('button', { name: 'Use demo track' }).click();
 
     await expect(page.getByText('AudioCanvas demo track')).toBeVisible();
-    await expect(page.locator('.audio-time--duration')).toHaveText('00:08');
+    await expect(page.locator('.audio-time--duration')).toHaveText('00:32');
     await expect(page.getByRole('button', { name: 'Play audio' })).toBeEnabled();
   });
 
