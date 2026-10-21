@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef } from 'react';
 import * as THREE from 'three';
 import { readLatestAudioFrame } from '@/engine/audio/audio-frame-store';
 import { RadialWaveDiskScene } from '@/engine/scenes/radial-wave-disk';
@@ -10,8 +10,6 @@ import {
   type RenderContext,
 } from '@/engine/scenes/scene';
 import type { AudioFrame } from '@/engine/audio/analysis';
-
-type RenderStatus = 'initializing' | 'ready' | 'unsupported';
 
 const IDLE_AUDIO_FRAME: AudioFrame = {
   time: 0,
@@ -23,9 +21,21 @@ const IDLE_AUDIO_FRAME: AudioFrame = {
   spectrum: new Uint8Array(1024),
 };
 
+function setStatus(host: HTMLDivElement, status: 'initializing' | 'ready' | 'unsupported'): void {
+  host.dataset.renderStatus = status;
+  const message = host.querySelector<HTMLElement>('[data-render-message]');
+  if (message === null) return;
+  if (status === 'ready') {
+    message.className = 'visualizer-canvas__status';
+    message.textContent = 'RADIAL WAVE DISK · LIVE';
+  } else if (status === 'unsupported') {
+    message.className = 'visualizer-canvas__message';
+    message.textContent = 'RENDERER UNAVAILABLE';
+  }
+}
+
 export function VisualizerCanvas() {
   const hostRef = useRef<HTMLDivElement>(null);
-  const [status, setStatus] = useState<RenderStatus>('initializing');
 
   useEffect(() => {
     const host = hostRef.current;
@@ -38,6 +48,18 @@ export function VisualizerCanvas() {
     let quality: QualityTier = 'high';
     let slowFrameSeconds = 0;
     let lastFrameTime = performance.now();
+    let listenerAdded = false;
+    const handleResize = () => {
+      if (renderer === null) return;
+      const width = Math.max(1, host.clientWidth);
+      const height = Math.max(1, host.clientHeight);
+      renderer.setSize(width, height, false);
+      if (activeSceneCamera !== null) {
+        activeSceneCamera.aspect = width / height;
+        activeSceneCamera.updateProjectionMatrix();
+      }
+    };
+    let activeSceneCamera: THREE.PerspectiveCamera | null = null;
 
     try {
       renderer = new THREE.WebGLRenderer({
@@ -56,26 +78,20 @@ export function VisualizerCanvas() {
       stage.background = new THREE.Color('#0a0a12');
       const camera = new THREE.PerspectiveCamera(46, 1, 0.1, 80);
       camera.position.set(0, 0, 10.3);
+      activeSceneCamera = camera;
 
       const context: RenderContext = { renderer, scene: stage, camera };
       activeScene = new RadialWaveDiskScene();
       activeScene.init(context, {});
-      const handleResize = () => {
-        if (renderer === null) return;
-        const width = Math.max(1, host.clientWidth);
-        const height = Math.max(1, host.clientHeight);
-        renderer.setSize(width, height, false);
-        camera.aspect = width / height;
-        camera.updateProjectionMatrix();
-      };
-
       handleResize();
       if (typeof ResizeObserver !== 'undefined') {
         resizeObserver = new ResizeObserver(handleResize);
         resizeObserver.observe(host);
       }
       window.addEventListener('resize', handleResize);
-      setStatus('ready');
+      listenerAdded = true;
+      host.dataset.quality = quality;
+      setStatus(host, 'ready');
 
       const renderLoop = (now: number) => {
         if (renderer === null || activeScene === null) return;
@@ -98,42 +114,39 @@ export function VisualizerCanvas() {
       };
 
       animationFrame = window.requestAnimationFrame(renderLoop);
-
-      return () => {
-        window.cancelAnimationFrame(animationFrame);
-        resizeObserver?.disconnect();
-        window.removeEventListener('resize', handleResize);
-        activeScene?.dispose();
-        renderer?.dispose();
-        if (renderer?.domElement.parentElement === host) host.removeChild(renderer.domElement);
-      };
     } catch {
       activeScene?.dispose();
       renderer?.dispose();
-      setStatus('unsupported');
+      if (renderer?.domElement.parentElement === host) host.removeChild(renderer.domElement);
+      host.querySelector('.visualizer-canvas__webgl')?.remove();
+      setStatus(host, 'unsupported');
     }
+
+    return () => {
+      window.cancelAnimationFrame(animationFrame);
+      resizeObserver?.disconnect();
+      if (listenerAdded) window.removeEventListener('resize', handleResize);
+      activeScene?.dispose();
+      renderer?.dispose();
+      if (renderer?.domElement.parentElement === host) host.removeChild(renderer.domElement);
+    };
   }, []);
 
   return (
     <div
       aria-label="Audio-reactive radial wave disk"
       className="visualizer-canvas"
-      data-render-status={status}
+      data-render-status="initializing"
       ref={hostRef}
       role="img"
     >
-      {status === 'initializing' ? (
-        <p className="visualizer-canvas__message">Initializing WebGL2 renderer…</p>
-      ) : null}
-      {status === 'unsupported' ? (
-        <div className="visualizer-canvas__fallback">
-          <span className="eyebrow">RENDERER UNAVAILABLE</span>
-          <p>WebGL2 could not be initialized. Try an up-to-date browser with hardware acceleration enabled.</p>
-        </div>
-      ) : null}
-      {status === 'ready' ? (
-        <p aria-live="polite" className="visualizer-canvas__status">RADIAL WAVE DISK <span>· LIVE</span></p>
-      ) : null}
+      <p aria-live="polite" className="visualizer-canvas__message" data-render-message>
+        Initializing WebGL2 renderer…
+      </p>
+      <div className="visualizer-canvas__fallback">
+        <span className="eyebrow">RENDERER UNAVAILABLE</span>
+        <p>WebGL2 could not be initialized. Try an up-to-date browser with hardware acceleration enabled.</p>
+      </div>
     </div>
   );
 }
