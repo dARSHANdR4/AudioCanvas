@@ -147,8 +147,7 @@ export function VisualizerCanvas() {
 
       animationFrame = window.requestAnimationFrame(renderLoop);
     } catch {
-      activeScene?.dispose();
-      activeScene = null;
+      // Scene initialization errors are handled inside switchScene; this catch covers renderer setup.
       renderer?.dispose();
       if (renderer?.domElement.parentElement === host) host.removeChild(renderer.domElement);
       host.querySelector('.visualizer-canvas__webgl')?.remove();
