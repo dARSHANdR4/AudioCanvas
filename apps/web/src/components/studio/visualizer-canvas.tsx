@@ -22,6 +22,7 @@ const IDLE_AUDIO_FRAME: AudioFrame = {
   level: 0,
   beat: false,
   spectrum: new Uint8Array(1024),
+  waveform: new Float32Array(2048),
 };
 
 function setStatus(host: HTMLDivElement, status: 'initializing' | 'ready' | 'unsupported', sceneName = 'RADIAL WAVE DISK'): void {

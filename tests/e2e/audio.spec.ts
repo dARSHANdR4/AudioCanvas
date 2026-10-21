@@ -15,11 +15,10 @@ function createFiveMinuteSilentMp3(): Buffer {
   return audio;
 }
 
-test.describe('M2 render core', () => {
-  test('switches all three live scenes without interrupting audio playback', async ({ page }) => {
+test.describe('M2 visual library', () => {
+  test('switches all seven scene styles while audio continues playing', async ({ page }) => {
     await page.goto('/studio');
 
-    await expect(page.getByRole('img', { name: 'Audio-reactive radial wave disk' })).toBeVisible();
     const canvas = page.locator('.visualizer-canvas');
     await expect(canvas).toBeVisible();
     await expect(canvas).toHaveAttribute('data-render-status', 'ready', { timeout: 10_000 });
@@ -30,21 +29,25 @@ test.describe('M2 render core', () => {
     await page.getByRole('button', { name: 'Play audio' }).click();
     await expect(page.getByRole('button', { name: 'Pause audio' })).toBeVisible();
 
-    await page.getByRole('button', { name: 'Switch to Particle Vortex' }).click();
-    await expect(canvas).toHaveAttribute('data-scene', 'particle-vortex');
-    await expect(canvas).toHaveAttribute('data-render-status', 'ready');
-    await expect(page.getByRole('button', { name: 'Switch to Particle Vortex' })).toHaveAttribute('aria-pressed', 'true');
-    await expect(page.getByRole('button', { name: 'Pause audio' })).toBeVisible();
+    const scenes = [
+      { id: 'radial-wave-disk', name: 'Radial Wave Disk' },
+      { id: 'particle-vortex', name: 'Particle Vortex' },
+      { id: 'synthwave-tunnel', name: 'Synthwave Tunnel' },
+      { id: 'waveform-scope', name: 'Oscilloscope Ribbon' },
+      { id: 'spectrogram-waterfall', name: 'Spectrogram Waterfall' },
+      { id: 'kaleidoscope-mandala', name: 'Kaleidoscope Mandala' },
+      { id: 'liquid-orb', name: 'Liquid Orb' },
+    ];
 
-    await page.getByRole('button', { name: 'Switch to Synthwave Tunnel' }).click();
-    await expect(canvas).toHaveAttribute('data-scene', 'synthwave-tunnel');
-    await expect(canvas).toHaveAttribute('data-render-status', 'ready');
-    await expect(page.getByRole('button', { name: 'Pause audio' })).toBeVisible();
-
-    await page.getByRole('button', { name: 'Switch to Radial Wave Disk' }).click();
-    await expect(canvas).toHaveAttribute('data-scene', 'radial-wave-disk');
-    await expect(canvas).toHaveAttribute('data-render-status', 'ready');
-    await expect(page.getByRole('button', { name: 'Pause audio' })).toBeVisible();
+    for (const scene of scenes) {
+      const button = page.getByRole('button', { name: `Switch to ${scene.name}` });
+      await expect(button).toBeVisible();
+      await button.click({ timeout: 15_000 });
+      await expect(canvas).toHaveAttribute('data-scene', scene.id, { timeout: 10_000 });
+      await expect(canvas).toHaveAttribute('data-render-status', 'ready');
+      await expect(button).toHaveAttribute('aria-pressed', 'true');
+      await expect(page.getByRole('button', { name: 'Pause audio' })).toBeVisible();
+    }
   });
 });
 

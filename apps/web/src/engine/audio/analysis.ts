@@ -26,6 +26,7 @@ export interface AudioFrame {
   level: number;
   beat: boolean;
   spectrum: Uint8Array<ArrayBuffer>;
+  waveform: Float32Array<ArrayBuffer>;
 }
 
 export interface AudioAnalysisConfig {
@@ -101,6 +102,7 @@ export function createAudioAnalysisState(
       level: 0,
       beat: false,
       spectrum: new Uint8Array(binCount),
+      waveform: new Float32Array(fftSize),
     },
     previousSpectrum: new Uint8Array(binCount),
     bassPeakWindow: new Float32Array(PEAK_WINDOW_FRAMES),
@@ -204,6 +206,8 @@ export function updateAudioAnalysis(
   timeSeconds: number,
 ): AudioFrame {
   const spectrum = state.frame.spectrum;
+  state.frame.waveform.fill(0);
+  state.frame.waveform.set(timeDomain.subarray(0, state.frame.waveform.length));
   const rawBass = bandRms(spectrum, state.bassStartBin, state.bassEndBin);
   const rawMid = bandRms(spectrum, state.midStartBin, state.midEndBin);
   const rawTreble = bandRms(spectrum, state.trebleStartBin, state.trebleEndBin);
@@ -252,6 +256,7 @@ export function updateAudioAnalysis(
 /** Clears smoothing/onset history while retaining all allocated buffers. */
 export function resetAudioAnalysis(state: AudioAnalysisState): void {
   state.frame.spectrum.fill(0);
+  state.frame.waveform.fill(0);
   state.previousSpectrum.fill(0);
   state.bassPeakWindow.fill(0);
   state.midPeakWindow.fill(0);
