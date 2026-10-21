@@ -499,3 +499,13 @@ button:disabled { cursor: not-allowed; opacity: 0.58; }
 .visualizer-canvas__fallback p { max-width: 310px; font-size: 12px; line-height: 1.7; }
 .stage-wrap::before { z-index: 1; }
 .stage-corner { z-index: 3; }
+
+/* M2 scene selector and multi-scene polish */
+.scene-card { width: 100%; text-align: left; font: inherit; color: inherit; cursor: pointer; }
+.scene-card:hover { border-color: rgba(0,245,255,.24); background: rgba(0,245,255,.035); }
+.scene-card:focus-visible { outline: 2px solid var(--cyan); outline-offset: 2px; }
+.scene-card__details { display: flex; flex-direction: column; min-width: 0; }
+.scene-card__name { display: block; margin-top: 3px; color: #d5d5e8; font-size: 10px; line-height: 1.35; font-weight: 550; }
+.scene-card--active .scene-card__name { color: #f2f2fa; }
+.scene-card__status { display: inline-flex; align-items: center; justify-content: center; color: #8585A2; font-size: 12px; }
+.scene-card--active .scene-card__status { color: var(--cyan); text-shadow: 0 0 9px rgba(0,245,255,.7); }

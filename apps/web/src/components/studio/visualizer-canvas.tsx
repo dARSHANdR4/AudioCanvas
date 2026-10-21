@@ -3,11 +3,13 @@
 import { useEffect, useRef } from 'react';
 import * as THREE from 'three';
 import { readLatestAudioFrame } from '@/engine/audio/audio-frame-store';
-import { RadialWaveDiskScene } from '@/engine/scenes/radial-wave-disk';
+import { createScene, SCENE_OPTIONS, type SceneId } from '@/engine/scenes/scene-registry';
+import { getSelectedScene, subscribeToSceneSelection } from '@/engine/scenes/scene-selection-store';
 import {
   DEFAULT_SCENE_PARAMS,
   type QualityTier,
   type RenderContext,
+  type Scene,
 } from '@/engine/scenes/scene';
 import type { AudioFrame } from '@/engine/audio/analysis';
 
@@ -21,13 +23,13 @@ const IDLE_AUDIO_FRAME: AudioFrame = {
   spectrum: new Uint8Array(1024),
 };
 
-function setStatus(host: HTMLDivElement, status: 'initializing' | 'ready' | 'unsupported'): void {
+function setStatus(host: HTMLDivElement, status: 'initializing' | 'ready' | 'unsupported', sceneName = 'RADIAL WAVE DISK'): void {
   host.dataset.renderStatus = status;
   const message = host.querySelector<HTMLElement>('[data-render-message]');
   if (message === null) return;
   if (status === 'ready') {
     message.className = 'visualizer-canvas__status';
-    message.textContent = 'RADIAL WAVE DISK · LIVE';
+    message.textContent = `${sceneName.toUpperCase()} · LIVE`;
   } else if (status === 'unsupported') {
     message.className = 'visualizer-canvas__message';
     message.textContent = 'RENDERER UNAVAILABLE';
@@ -44,11 +46,15 @@ export function VisualizerCanvas() {
     let renderer: THREE.WebGLRenderer | null = null;
     let resizeObserver: ResizeObserver | null = null;
     let animationFrame = 0;
-    let activeScene: RadialWaveDiskScene | null = null;
+    let activeScene: Scene | null = null;
+    let renderContext: RenderContext | null = null;
     let quality: QualityTier = 'high';
     let slowFrameSeconds = 0;
     let lastFrameTime = performance.now();
     let listenerAdded = false;
+    let unsubscribeSceneSelection: (() => void) | null = null;
+    let activeSceneCamera: THREE.PerspectiveCamera | null = null;
+
     const handleResize = () => {
       if (renderer === null) return;
       const width = Math.max(1, host.clientWidth);
@@ -59,7 +65,32 @@ export function VisualizerCanvas() {
         activeSceneCamera.updateProjectionMatrix();
       }
     };
-    let activeSceneCamera: THREE.PerspectiveCamera | null = null;
+
+    const switchScene = (sceneId: SceneId) => {
+      if (renderContext === null) return;
+      const metadata = SCENE_OPTIONS.find((option) => option.id === sceneId);
+      if (metadata === undefined) return;
+      activeScene?.dispose();
+      activeScene = null;
+
+      try {
+        const nextScene = createScene(sceneId);
+        nextScene.init(renderContext, { quality });
+        activeScene = nextScene;
+        host.dataset.scene = sceneId;
+        host.dataset.quality = quality;
+        host.setAttribute('aria-label', `Audio-reactive ${metadata.name.toLowerCase()}`);
+        host.closest('.studio-shell')?.querySelector<HTMLElement>('[data-scene-label]')?.replaceChildren(
+          document.createTextNode(metadata.name.toUpperCase()),
+        );
+        setStatus(host, 'ready', metadata.name);
+      } catch {
+        activeScene?.dispose();
+        activeScene = null;
+        host.dataset.scene = sceneId;
+        setStatus(host, 'unsupported');
+      }
+    };
 
     try {
       renderer = new THREE.WebGLRenderer({
@@ -79,10 +110,8 @@ export function VisualizerCanvas() {
       const camera = new THREE.PerspectiveCamera(46, 1, 0.1, 80);
       camera.position.set(0, 0, 10.3);
       activeSceneCamera = camera;
+      renderContext = { renderer, scene: stage, camera };
 
-      const context: RenderContext = { renderer, scene: stage, camera };
-      activeScene = new RadialWaveDiskScene();
-      activeScene.init(context, {});
       handleResize();
       if (typeof ResizeObserver !== 'undefined') {
         resizeObserver = new ResizeObserver(handleResize);
@@ -90,23 +119,26 @@ export function VisualizerCanvas() {
       }
       window.addEventListener('resize', handleResize);
       listenerAdded = true;
-      host.dataset.quality = quality;
-      setStatus(host, 'ready');
+
+      unsubscribeSceneSelection = subscribeToSceneSelection((id) => switchScene(id));
+      switchScene(getSelectedScene());
 
       const renderLoop = (now: number) => {
-        if (renderer === null || activeScene === null) return;
+        if (renderer === null) return;
         const dt = Math.min(0.05, Math.max(0, (now - lastFrameTime) / 1000));
         lastFrameTime = now;
         const frameStarted = performance.now();
-        activeScene.update(readLatestAudioFrame() ?? IDLE_AUDIO_FRAME, DEFAULT_SCENE_PARAMS, dt);
-        activeScene.render();
+        if (activeScene !== null) {
+          activeScene.update(readLatestAudioFrame() ?? IDLE_AUDIO_FRAME, DEFAULT_SCENE_PARAMS, dt);
+          activeScene.render();
+        }
 
         const frameCost = performance.now() - frameStarted;
         if (frameCost > 20) slowFrameSeconds += dt;
         else slowFrameSeconds = Math.max(0, slowFrameSeconds - dt * 0.5);
         if (slowFrameSeconds >= 2 && quality !== 'low') {
           quality = quality === 'high' ? 'medium' : 'low';
-          activeScene.setQuality(quality);
+          activeScene?.setQuality(quality);
           host.dataset.quality = quality;
           slowFrameSeconds = 0;
         }
@@ -116,6 +148,7 @@ export function VisualizerCanvas() {
       animationFrame = window.requestAnimationFrame(renderLoop);
     } catch {
       activeScene?.dispose();
+      activeScene = null;
       renderer?.dispose();
       if (renderer?.domElement.parentElement === host) host.removeChild(renderer.domElement);
       host.querySelector('.visualizer-canvas__webgl')?.remove();
@@ -124,6 +157,7 @@ export function VisualizerCanvas() {
 
     return () => {
       window.cancelAnimationFrame(animationFrame);
+      unsubscribeSceneSelection?.();
       resizeObserver?.disconnect();
       if (listenerAdded) window.removeEventListener('resize', handleResize);
       activeScene?.dispose();

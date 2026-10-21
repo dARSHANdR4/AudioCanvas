@@ -33,14 +33,14 @@ A browser-based visualizer studio concept for turning music into color, motion, 
 
 AudioCanvas is an early-stage project for creating a no-code, sound-reactive visualizer experience. The long-term idea is to let people shape visuals with audio, scene choices, mappings, and effects — without writing shaders.
 
-**Current status, clearly:** M0 is complete. M1 audio input/analysis has passed the repository CI suite and the live browser smoke test. M2 Render Core is in progress: the first audio-reactive Three.js Radial Wave Disk is being added; Particle Vortex and Synthwave Tunnel remain planned within M2. The roadmap below separates working features from planned work.
+**Current status, clearly:** M0 and M1 are complete. M2 Render Core now has three selectable Three.js scenes—Radial Wave Disk, Particle Vortex, and Synthwave Tunnel—with shared live audio data and scene cleanup. CI verifies scene switching and audio continuity; reference-device 60 FPS verification remains pending. The roadmap below separates working features from planned work.
 
 ## 🟩 LIVE BUILD
 
 | Destination | What you'll find |
 |---|---|
 | [🟢 **Live website**](https://audiocanvas-darshandr4s-projects.vercel.app/) | Landing page and project introduction |
-| [🎛️ **Open Studio**](https://audiocanvas-darshandr4s-projects.vercel.app/studio) | Local audio/demo playback, mic input, seekable timeline, analysis meters and the first audio-reactive Radial Wave Disk (M2 in progress) |
+| [🎛️ **Open Studio**](https://audiocanvas-darshandr4s-projects.vercel.app/studio) | Local audio/demo playback, mic input, seekable timeline, analysis meters and three selectable audio-reactive Three.js scenes |
 | [🖼️ **Gallery**](https://audiocanvas-darshandr4s-projects.vercel.app/gallery) | Gallery route and empty state |
 | [👤 **My Presets**](https://audiocanvas-darshandr4s-projects.vercel.app/me) | Presets/account placeholder |
 | [🧪 **CI runs**](https://github.com/dARSHANdR4/AudioCanvas/actions) | Lint, TypeScript, unit tests, build, and browser checks |
@@ -56,13 +56,13 @@ AudioCanvas is an early-stage project for creating a no-code, sound-reactive vis
 - **M1 audio workbench:** local MP3/WAV/FLAC/OGG/M4A decode (up to 100 MB), drag-and-drop, an 8-second deterministic browser-generated demo track, play/pause, seekable timeline and waveform preview.
 - **Microphone input:** gesture-gated permission request, human-readable permission errors, optional input-device selection, and no microphone-to-speaker routing.
 - **Live analysis:** configurable FFT size (256/512/1024/2048), Bass/Mid/Treble/Level meters, smoothing, rolling auto-gain and onset/beat detection using reusable typed arrays outside React state.
-- **M2 render core (first slice):** Three.js/WebGL2 scene contract, managed renderer lifecycle, and a Radial Wave Disk driven by the live audio-frame bridge. A follow-up contrast fix brightens the spectrum bars, rings and center core; visual confirmation on a real browser is still pending. Additional scenes and full M2 performance verification remain in progress.
+- **M2 render core:** managed Three.js/WebGL2 renderer, scene registry and selection UI, bright audio-reactive Radial Wave Disk, 100,000-instance GPU-shader Particle Vortex, and a neon Synthwave Tunnel. Scene switching preserves playback and disposes old scene resources. Reference-device performance and long-session GPU checks remain pending.
 - **Quality gates** for linting, strict TypeScript, unit tests, production builds, and Playwright smoke tests.
 - **Project documentation** covering product requirements, UX, architecture, engineering decisions, and the test roadmap.
 
 ### Current boundaries
 
-Audio input and analysis are wired into the M1 Studio. The first M2 scene, Radial Wave Disk, is implemented on the render-core development branch. M2 remains in progress until Particle Vortex, Synthwave Tunnel, scene switching, and performance verification are complete. Mapping controls, cloud accounts, persistent presets/sharing, and video export remain later milestones. User files and microphone audio are processed locally and are not uploaded.
+Audio input/analysis and the three M2 scenes are wired into the Studio. Scene selection preserves audio playback and disposes resources from the previous scene. M2 remains in progress until reference-device 60 FPS and sustained GPU/resource checks are verified. Mapping controls, cloud accounts, persistent presets/sharing, and video export remain later milestones. Mapping controls, cloud accounts, persistent presets/sharing, and video export remain later milestones. User files and microphone audio are processed locally and are not uploaded.
 
 ## 🗺️ NEXT QUESTS — ROADMAP
 
@@ -70,7 +70,7 @@ Audio input and analysis are wired into the M1 Studio. The first M2 scene, Radia
 |---|---|---|
 | **M0 · Shell** | Repository, responsive routes, design tokens, docs, CI, smoke tests, deployment | ✅ Complete |
 | **M1 · Audio core** | Audio upload/microphone, analyser, frequency bands, beat detection, timeline and demo track | ✅ Complete — CI and live smoke test passed |
-| **M2 · Render core** | Three.js renderer and three audio-reactive scenes | 🟡 In progress — Radial Wave Disk first slice |
+| **M2 · Render core** | Three.js renderer, Radial Wave Disk, Particle Vortex, Synthwave Tunnel and scene switching | 🟡 In progress — functional scenes and switching; reference-device 60 FPS validation pending |
 | **M3 · Customization** | Audio-to-visual mappings, themes, effects, undo/redo | 🧭 Planned |
 | **M4 · Presets** | Local presets and shareable URLs | 🧭 Planned |
 | **M5 · Export** | Browser-based video export and progress/cancel flow | 🧭 Planned |
