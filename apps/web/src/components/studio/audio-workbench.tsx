@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { AudioEngine, type AudioInputDevice } from '@/engine/audio/audio-engine';
 import { FFT_SIZES, type FftSize } from '@/engine/audio/analysis';
+import { publishAudioFrame } from '@/engine/audio/audio-frame-store';
 
 function formatTime(seconds: number): string {
   if (!Number.isFinite(seconds) || seconds < 0) return '00:00';
@@ -77,6 +78,7 @@ export function AudioWorkbench() {
   }, []);
 
   const stopMeterLoop = useCallback(() => {
+    publishAudioFrame(null);
     if (rafRef.current !== null) {
       window.cancelAnimationFrame(rafRef.current);
       rafRef.current = null;
@@ -88,11 +90,13 @@ export function AudioWorkbench() {
     const tick = () => {
       const engine = engineRef.current;
       if (engine === null || !engine.isAnalyzing) {
+        publishAudioFrame(null);
         rafRef.current = null;
         return;
       }
       const frame = engine.readFrame();
       if (frame !== null) {
+        publishAudioFrame(frame);
         updateMeter(bassTrackRef.current, bassFillRef.current, frame.bass);
         updateMeter(midTrackRef.current, midFillRef.current, frame.mid);
         updateMeter(trebleTrackRef.current, trebleFillRef.current, frame.treble);

@@ -35,8 +35,8 @@
 | Milestone | Deliverables | Exit criteria |
 | --- | --- | --- |
 | M0 — Setup (week 1) | Repo, CI, design tokens, shell UI | Pipeline green; shell deployed |
-| M1 — Audio core (weeks 2–3) | Upload, mic, analyser, bands, timeline | TC-01 to TC-05 pass |
-| M2 — Render core (weeks 3–5) | Renderer, Scene interface, Radial Disk, Vortex, Tunnel | 60 FPS reference device |
+| M1 — Audio core (weeks 2–3) | Upload, mic, analyser, bands, timeline | ✅ TC-01 to TC-05 pass in CI; live browser smoke test passed |
+| M2 — Render core (weeks 3–5) | Three.js renderer, Scene interface, Radial Disk, Vortex, Tunnel | In progress: Radial Disk implemented; all three scenes and 60 FPS reference-device check pending |
 | M3 — Customization (weeks 5–7) | Mapping panel, themes, post-FX, undo/redo, keyboard shortcuts | TC-06, TC-07 pass |
 | M4 — VJ and Presets (weeks 7–9) | Fullscreen mode, local presets, URL sharing | TC-11 pass |
 | M5 — Export (weeks 9–12) | Offline analysis, encoder pipeline, export UI | TC-08 to TC-10 pass |
