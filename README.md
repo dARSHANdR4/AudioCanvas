@@ -33,7 +33,7 @@ A browser-based visualizer studio concept for turning music into color, motion, 
 
 AudioCanvas is an early-stage project for creating a no-code, sound-reactive visualizer experience. The long-term idea is to let people shape visuals with audio, scene choices, mappings, and effects — without writing shaders.
 
-**Current status, clearly:** M0 and M1 are complete. M2 Render Core now has three selectable Three.js scenes—Radial Wave Disk, Particle Vortex, and Synthwave Tunnel—with shared live audio data and scene cleanup. CI verifies scene switching and audio continuity; reference-device 60 FPS verification remains pending. The roadmap below separates working features from planned work.
+**Current status, clearly:** M0 and M1 are complete. M2 Render Core now has three selectable Three.js scenes—Radial Wave Disk, Particle Vortex, and Synthwave Tunnel—with shared live audio data, stronger band/beat response shaping, continuous tunnel travel, and scene cleanup. CI verifies scene switching and audio continuity; reference-device 60 FPS verification remains pending. The roadmap below separates working features from planned work.
 
 ## 🟩 LIVE BUILD
 

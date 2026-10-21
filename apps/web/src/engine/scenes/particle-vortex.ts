@@ -1,5 +1,6 @@
 import * as THREE from 'three';
 import type { AudioFrame } from '../audio/analysis';
+import { updateBeatEnvelope, visualEnergy } from './visual-response';
 import {
   DEFAULT_SCENE_THEME,
   type ParamFrame,
@@ -38,21 +39,22 @@ varying vec3 vColor;
 varying float vAlpha;
 void main() {
   float angle = atan(iPosition.y, iPosition.x);
-  angle += uTime * (0.13 + uMid * 0.75) + iPhase * 0.12 * uTurbulence;
+  angle += uTime * (0.48 + uMid * 1.75) + iPhase * (0.14 + 0.18 * uTurbulence);
   float radius = length(iPosition.xy);
-  radius += sin(uTime * 1.15 + iPhase * 5.0) * (0.10 + uTurbulence * 0.13);
-  radius += uBass * (0.18 + 0.24 * sin(iPhase * 7.0));
+  radius += sin(uTime * 1.7 + iPhase * 5.0) * (0.18 + uTurbulence * 0.42);
+  radius += uBass * (0.34 + 0.58 * sin(iPhase * 7.0));
   vec3 animatedPosition = vec3(cos(angle) * radius, sin(angle) * radius, iPosition.z);
-  animatedPosition.z += sin(uTime * 0.72 + iPhase * 3.2) * (0.16 + uTreble * 0.12);
+  animatedPosition.z += sin(uTime * 1.25 + iPhase * 3.2) * (0.25 + uTreble * 0.52);
+  animatedPosition.xy *= 1.0 + uLevel * 0.12 + uBass * 0.10;
   vec4 viewPosition = modelViewMatrix * vec4(animatedPosition, 1.0);
-  float billboardSize = (0.025 + iSize * 0.028 + uTreble * 0.018) * (1.0 + uLevel * 0.15);
+  float billboardSize = (0.038 + iSize * 0.042 + uTreble * 0.042) * (1.0 + uLevel * 0.35);
   viewPosition.xy += position.xy * billboardSize;
   gl_Position = projectionMatrix * viewPosition;
   vUv = uv;
   float hue = clamp((sin(angle * 1.5 + iPhase) + 1.0) * 0.5, 0.0, 1.0);
   vColor = mix(uColorA, uColorB, hue);
-  vColor = mix(vColor, uColorC, clamp(uBass * 0.6, 0.0, 0.6));
-  vAlpha = 0.65 + uLevel * 0.25 + uTreble * 0.18;
+  vColor = mix(vColor, uColorC, clamp(uBass * 0.85, 0.0, 0.85));
+  vAlpha = 0.72 + uLevel * 0.34 + uTreble * 0.32;
 }
 `;
 
@@ -158,13 +160,13 @@ export class ParticleVortexScene implements Scene {
   update(audioFrame: AudioFrame, params: ParamFrame, dt: number): void {
     if (this.disposed || this.particleMaterial === null) return;
     this.elapsed += dt;
-    this.beatGlow = audioFrame.beat ? 1 : Math.max(0, this.beatGlow - dt * 3.5);
+    this.beatGlow = updateBeatEnvelope(this.beatGlow, audioFrame.beat, dt);
     const uniforms = this.particleMaterial.uniforms;
     uniforms.uTime.value = this.elapsed;
-    uniforms.uBass.value = audioFrame.bass;
-    uniforms.uMid.value = audioFrame.mid;
-    uniforms.uTreble.value = audioFrame.treble;
-    uniforms.uLevel.value = Math.max(audioFrame.level, this.beatGlow * 0.65);
+    uniforms.uBass.value = Math.max(visualEnergy(audioFrame.bass, 1.75, 0.7), this.beatGlow * 0.72);
+    uniforms.uMid.value = visualEnergy(audioFrame.mid, 1.85, 0.7);
+    uniforms.uTreble.value = visualEnergy(audioFrame.treble, 1.9, 0.68);
+    uniforms.uLevel.value = Math.max(visualEnergy(audioFrame.level, 1.55, 0.78), this.beatGlow * 0.9);
     uniforms.uTurbulence.value = Math.max(0, Math.min(2, params.particleTurbulence ?? 0.5));
     uniforms.uPointSize.value = 1 + Math.max(0, Math.min(2, params.colorFlash ?? 0)) * 0.15;
   }
