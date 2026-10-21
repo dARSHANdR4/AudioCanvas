@@ -15,6 +15,21 @@ function createFiveMinuteSilentMp3(): Buffer {
   return audio;
 }
 
+test.describe('M2 render core', () => {
+  test('initializes the Radial Wave Disk WebGL canvas in the studio', async ({ page }) => {
+    await page.goto('/studio');
+
+    const canvas = page.getByRole('img', { name: 'Audio-reactive radial wave disk' });
+    await expect(canvas).toBeVisible();
+    await expect(canvas).toHaveAttribute('data-render-status', 'ready', { timeout: 10_000 });
+    await expect(page.locator('.visualizer-canvas__webgl')).toBeAttached();
+
+    await page.getByRole('button', { name: 'Use demo track' }).click();
+    await page.getByRole('button', { name: 'Play audio' }).click();
+    await expect(page.getByRole('button', { name: 'Pause audio' })).toBeVisible();
+  });
+});
+
 test.describe('M1 audio core', () => {
   test('loads the built-in demo track without a network audio asset', async ({ page }) => {
     await page.goto('/studio');

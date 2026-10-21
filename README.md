@@ -28,19 +28,19 @@ A browser-based visualizer studio concept for turning music into color, motion, 
 
 > **Project type:** Browser-based visualizer studio  
 > **Builder:** [dARSHANdR4](https://github.com/dARSHANdR4)  
-> **Current milestone:** M1 — Audio Core (in progress)  
+> **Current milestone:** M2 — Render Core (in progress)  
 > **Build philosophy:** Useful first. Reliable always. Keep shipping.
 
 AudioCanvas is an early-stage project for creating a no-code, sound-reactive visualizer experience. The long-term idea is to let people shape visuals with audio, scene choices, mappings, and effects — without writing shaders.
 
-**Current status, clearly:** M0 is complete and M1 audio input/analysis is being implemented. The landing/studio artwork remains a static CSS/SVG preview; reactive Three.js scenes are planned for M2. The roadmap below separates working features from planned work.
+**Current status, clearly:** M0 is complete. M1 audio input/analysis has passed the repository CI suite and the live browser smoke test. M2 Render Core is in progress: the first audio-reactive Three.js Radial Wave Disk is being added; Particle Vortex and Synthwave Tunnel remain planned within M2. The roadmap below separates working features from planned work.
 
 ## 🟩 LIVE BUILD
 
 | Destination | What you'll find |
 |---|---|
 | [🟢 **Live website**](https://audiocanvas-darshandr4s-projects.vercel.app/) | Landing page and project introduction |
-| [🎛️ **Open Studio**](https://audiocanvas-darshandr4s-projects.vercel.app/studio) | Local audio file/demo playback, mic input, seekable timeline and audio-analysis meters; reactive 3D scenes come in M2 |
+| [🎛️ **Open Studio**](https://audiocanvas-darshandr4s-projects.vercel.app/studio) | Local audio/demo playback, mic input, seekable timeline, analysis meters and the first audio-reactive Radial Wave Disk (M2 in progress) |
 | [🖼️ **Gallery**](https://audiocanvas-darshandr4s-projects.vercel.app/gallery) | Gallery route and empty state |
 | [👤 **My Presets**](https://audiocanvas-darshandr4s-projects.vercel.app/me) | Presets/account placeholder |
 | [🧪 **CI runs**](https://github.com/dARSHANdR4/AudioCanvas/actions) | Lint, TypeScript, unit tests, build, and browser checks |
@@ -56,20 +56,21 @@ AudioCanvas is an early-stage project for creating a no-code, sound-reactive vis
 - **M1 audio workbench:** local MP3/WAV/FLAC/OGG/M4A decode (up to 100 MB), drag-and-drop, an 8-second deterministic browser-generated demo track, play/pause, seekable timeline and waveform preview.
 - **Microphone input:** gesture-gated permission request, human-readable permission errors, optional input-device selection, and no microphone-to-speaker routing.
 - **Live analysis:** configurable FFT size (256/512/1024/2048), Bass/Mid/Treble/Level meters, smoothing, rolling auto-gain and onset/beat detection using reusable typed arrays outside React state.
+- **M2 render core (first slice):** Three.js/WebGL2 scene contract, managed renderer lifecycle, and a Radial Wave Disk driven by the live audio-frame bridge. Additional scenes and full M2 performance verification remain in progress.
 - **Quality gates** for linting, strict TypeScript, unit tests, production builds, and Playwright smoke tests.
 - **Project documentation** covering product requirements, UX, architecture, engineering decisions, and the test roadmap.
 
 ### Current boundaries
 
-Audio input and analysis are now wired into the M1 Studio, but AudioCanvas is not yet the finished visualizer. Reactive Three.js scenes, real scene switching, audio-to-visual mapping controls, cloud accounts, persistent presets/sharing, and video export are not implemented yet. Those belong to M2–M6. User files and microphone audio are processed locally and are not uploaded.
+Audio input and analysis are wired into the M1 Studio. The first M2 scene, Radial Wave Disk, is implemented on the render-core development branch. M2 remains in progress until Particle Vortex, Synthwave Tunnel, scene switching, and performance verification are complete. Mapping controls, cloud accounts, persistent presets/sharing, and video export remain later milestones. User files and microphone audio are processed locally and are not uploaded.
 
 ## 🗺️ NEXT QUESTS — ROADMAP
 
 | Milestone | Planned work | Status |
 |---|---|---|
 | **M0 · Shell** | Repository, responsive routes, design tokens, docs, CI, smoke tests, deployment | ✅ Complete |
-| **M1 · Audio core** | Audio upload/microphone, analyser, frequency bands, beat detection, timeline and demo track | 🟡 In progress — TC-01–TC-05 verification |
-| **M2 · Render core** | Rendering engine and starter visual scenes | 🧭 Planned |
+| **M1 · Audio core** | Audio upload/microphone, analyser, frequency bands, beat detection, timeline and demo track | ✅ Complete — CI and live smoke test passed |
+| **M2 · Render core** | Three.js renderer and three audio-reactive scenes | 🟡 In progress — Radial Wave Disk first slice |
 | **M3 · Customization** | Audio-to-visual mappings, themes, effects, undo/redo | 🧭 Planned |
 | **M4 · Presets** | Local presets and shareable URLs | 🧭 Planned |
 | **M5 · Export** | Browser-based video export and progress/cancel flow | 🧭 Planned |

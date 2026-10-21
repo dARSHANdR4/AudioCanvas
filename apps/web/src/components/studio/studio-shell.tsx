@@ -1,6 +1,6 @@
 import Link from 'next/link';
 import { Brand } from '../brand';
-import { VisualizerArtwork } from '../visualizer-artwork';
+import { VisualizerCanvas } from './visualizer-canvas';
 import { AudioWorkbench } from './audio-workbench';
 
 const sceneCards = [
@@ -60,7 +60,7 @@ export function StudioShell() {
           </div>
           <div className="sidebar-note">
             <span className="status-dot status-dot--muted" />
-            <p>Scene rendering is being wired up in <strong>M2</strong>.</p>
+            <p>Radial Wave Disk is the first live scene. Two more scenes are next in M2.</p>
           </div>
         </aside>
 
@@ -70,20 +70,15 @@ export function StudioShell() {
               <p className="eyebrow">CANVAS VIEWPORT</p>
               <h1>Your sound, reimagined.</h1>
             </div>
-            <span className="state-pill"><span className="status-dot status-dot--muted" /> M1 AUDIO CORE</span>
+            <span className="state-pill"><span className="status-dot" /> M2 RENDER CORE</span>
           </div>
           <div className="stage-wrap">
-            <VisualizerArtwork label="Static decorative preview. Audio-reactive 3D rendering is planned for M2." />
-            <div className="stage-center-note">
-              <span className="stage-center-note__icon" aria-hidden="true">◌</span>
-              <span className="eyebrow">THE CANVAS IS READY</span>
-              <p>Audio analysis is ready. Reactive 3D rendering arrives in M2.</p>
-            </div>
+            <VisualizerCanvas />
             <div className="stage-corner stage-corner--top-left"><span>AC / 001</span><span>16:9</span></div>
-            <div className="stage-corner stage-corner--bottom-right"><span>WEBGL2</span><span className="status-dot status-dot--muted" /> NOT INITIALIZED</div>
+            <div className="stage-corner stage-corner--bottom-right"><span>WEBGL2</span><span className="status-dot" /> RADIAL DISK</div>
           </div>
           <AudioWorkbench />
-          <p className="studio-mobile-note">Audio file decoding, playback, microphone analysis, and the seekable timeline are enabled in M1. Reactive 3D scenes and export arrive in M2 and M5.</p>
+          <p className="studio-mobile-note">Audio input and analysis are live, and the Radial Wave Disk now responds to the audio spectrum. The Particle Vortex and Synthwave Tunnel are the next M2 scenes.</p>
         </section>
 
         <aside aria-label="Customization panels" className="studio-inspector">
@@ -124,7 +119,7 @@ export function StudioShell() {
           </section>
         </aside>
       </div>
-      <footer className="studio-statusbar"><span><span className="status-dot status-dot--muted" /> M1 · AUDIO CORE ENABLED</span><span>60 FPS TARGET</span><span>LOCAL-FIRST BY DESIGN</span><Link href="/legal/photosensitivity">Photosensitivity notice</Link></footer>
+      <footer className="studio-statusbar"><span><span className="status-dot" /> M2 · RENDER CORE PREVIEW</span><span>60 FPS TARGET</span><span>LOCAL-FIRST BY DESIGN</span><Link href="/legal/photosensitivity">Photosensitivity notice</Link></footer>
     </main>
   );
 }
