@@ -46,3 +46,10 @@ Record material implementation choices and unresolved specification gaps here. T
 ## M2 visual contrast correction
 
 | DEC-021 | Radial Wave Disk instance bars use instancing colors, not vertex-color attributes; use a white base material, additive blending and brighter band/ring colors. | The first live screenshot showed the ring/core but the radial bars were nearly black. The instanced mesh already sets per-instance colors; enabling vertexColors on geometry without a color attribute can suppress those intended colors. Increase minimum bar length and ring opacity so low-energy audio still reads clearly. | Accepted; visual confirmation pending |
+
+
+## M2 scene completion slice
+
+| DEC-022 | Keep scene metadata and construction in a typed registry, and notify the canvas through a small in-memory scene-selection store. | Sidebar controls stay accessible while the renderer owns the GPU lifecycle. The active scene is disposed and replaced inside the existing renderer/context; audio lives in a separate component and continues during swaps. | Accepted |
+| DEC-023 | Implement Particle Vortex as 100,000 GPU-instanced quads with deterministic per-instance position/size/phase data animated in the vertex shader. | Avoids per-frame CPU updates for each particle; adaptive tiers use 100,000 / 60,000 / 25,000 active instances. Hardware performance verification remains required. | Accepted; performance check pending |
+| DEC-024 | Implement Synthwave Tunnel from deterministic vertex-colored ring and longitudinal line segments, deformed with shader uniforms fed by the shared audio frame. | Provides a light-weight perspective-grid scene with live bass, mid and treble response and theme-compatible vertex colors. | Accepted |

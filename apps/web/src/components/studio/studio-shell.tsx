@@ -2,12 +2,9 @@ import Link from 'next/link';
 import { Brand } from '../brand';
 import { VisualizerCanvas } from './visualizer-canvas';
 import { AudioWorkbench } from './audio-workbench';
+import { SceneSelector } from './scene-selector';
 
-const sceneCards = [
-  { number: '01', name: 'Radial Wave Disk', tag: 'SPECTRUM', className: 'scene-thumb--radial' },
-  { number: '02', name: 'Particle Vortex', tag: 'PARTICLES', className: 'scene-thumb--vortex' },
-  { number: '03', name: 'Synthwave Tunnel', tag: 'PERSPECTIVE', className: 'scene-thumb--tunnel' },
-] as const;
+
 
 export function StudioShell() {
   return (
@@ -42,25 +39,10 @@ export function StudioShell() {
             <span className="eyebrow">01 / VISUALS</span>
             <h2>Scenes</h2>
           </div>
-          <div className="scene-card-list">
-            {sceneCards.map((scene, index) => (
-              <article className={`scene-card${index === 0 ? ' scene-card--active' : ''}`} key={scene.number}>
-                <div aria-hidden="true" className={`scene-thumb ${scene.className}`}>
-                  <span className="scene-thumb__orbit" />
-                  <span className="scene-thumb__core" />
-                  <span className="scene-thumb__code">{scene.number}</span>
-                </div>
-                <div className="scene-card__details">
-                  <span className="scene-card__tag">{scene.tag}</span>
-                  <h3>{scene.name}</h3>
-                </div>
-                <span aria-label="Scene selection available in M2" className="scene-card__status">{index === 0 ? '01' : '—'}</span>
-              </article>
-            ))}
-          </div>
+          <SceneSelector />
           <div className="sidebar-note">
             <span className="status-dot status-dot--muted" />
-            <p>Radial Wave Disk is the first live scene. Two more scenes are next in M2.</p>
+            <p>Choose among three live audio-reactive scenes. Switching scenes keeps your audio playing.</p>
           </div>
         </aside>
 
@@ -75,10 +57,10 @@ export function StudioShell() {
           <div className="stage-wrap">
             <VisualizerCanvas />
             <div className="stage-corner stage-corner--top-left"><span>AC / 001</span><span>16:9</span></div>
-            <div className="stage-corner stage-corner--bottom-right"><span>WEBGL2</span><span className="status-dot" /> RADIAL DISK</div>
+            <div className="stage-corner stage-corner--bottom-right"><span>WEBGL2</span><span className="status-dot" /> <span data-scene-label>RADIAL WAVE DISK</span></div>
           </div>
           <AudioWorkbench />
-          <p className="studio-mobile-note">Audio input and analysis are live, and the Radial Wave Disk now responds to the audio spectrum. The Particle Vortex and Synthwave Tunnel are the next M2 scenes.</p>
+          <p className="studio-mobile-note">All three M2 scenes are selectable and react to the shared audio analysis. The renderer swaps scenes without restarting audio.</p>
         </section>
 
         <aside aria-label="Customization panels" className="studio-inspector">

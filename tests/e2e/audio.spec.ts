@@ -16,16 +16,34 @@ function createFiveMinuteSilentMp3(): Buffer {
 }
 
 test.describe('M2 render core', () => {
-  test('initializes the Radial Wave Disk WebGL canvas in the studio', async ({ page }) => {
+  test('switches all three live scenes without interrupting audio playback', async ({ page }) => {
     await page.goto('/studio');
 
-    const canvas = page.getByRole('img', { name: 'Audio-reactive radial wave disk' });
+    await expect(page.getByRole('img', { name: 'Audio-reactive radial wave disk' })).toBeVisible();
+    const canvas = page.locator('.visualizer-canvas');
     await expect(canvas).toBeVisible();
     await expect(canvas).toHaveAttribute('data-render-status', 'ready', { timeout: 10_000 });
+    await expect(canvas).toHaveAttribute('data-scene', 'radial-wave-disk');
     await expect(page.locator('.visualizer-canvas__webgl')).toBeAttached();
 
     await page.getByRole('button', { name: 'Use demo track' }).click();
     await page.getByRole('button', { name: 'Play audio' }).click();
+    await expect(page.getByRole('button', { name: 'Pause audio' })).toBeVisible();
+
+    await page.getByRole('button', { name: 'Switch to Particle Vortex' }).click();
+    await expect(canvas).toHaveAttribute('data-scene', 'particle-vortex');
+    await expect(canvas).toHaveAttribute('data-render-status', 'ready');
+    await expect(page.getByRole('button', { name: 'Switch to Particle Vortex' })).toHaveAttribute('aria-pressed', 'true');
+    await expect(page.getByRole('button', { name: 'Pause audio' })).toBeVisible();
+
+    await page.getByRole('button', { name: 'Switch to Synthwave Tunnel' }).click();
+    await expect(canvas).toHaveAttribute('data-scene', 'synthwave-tunnel');
+    await expect(canvas).toHaveAttribute('data-render-status', 'ready');
+    await expect(page.getByRole('button', { name: 'Pause audio' })).toBeVisible();
+
+    await page.getByRole('button', { name: 'Switch to Radial Wave Disk' }).click();
+    await expect(canvas).toHaveAttribute('data-scene', 'radial-wave-disk');
+    await expect(canvas).toHaveAttribute('data-render-status', 'ready');
     await expect(page.getByRole('button', { name: 'Pause audio' })).toBeVisible();
   });
 });
@@ -36,7 +54,7 @@ test.describe('M1 audio core', () => {
     await page.getByRole('button', { name: 'Use demo track' }).click();
 
     await expect(page.getByText('AudioCanvas demo track')).toBeVisible();
-    await expect(page.locator('.audio-time--duration')).toHaveText('00:08');
+    await expect(page.locator('.audio-time--duration')).toHaveText('00:32');
     await expect(page.getByRole('button', { name: 'Play audio' })).toBeEnabled();
   });
 
