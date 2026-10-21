@@ -56,7 +56,7 @@ AudioCanvas is an early-stage project for creating a no-code, sound-reactive vis
 - **M1 audio workbench:** local MP3/WAV/FLAC/OGG/M4A decode (up to 100 MB), drag-and-drop, an 8-second deterministic browser-generated demo track, play/pause, seekable timeline and waveform preview.
 - **Microphone input:** gesture-gated permission request, human-readable permission errors, optional input-device selection, and no microphone-to-speaker routing.
 - **Live analysis:** configurable FFT size (256/512/1024/2048), Bass/Mid/Treble/Level meters, smoothing, rolling auto-gain and onset/beat detection using reusable typed arrays outside React state.
-- **M2 render core (first slice):** Three.js/WebGL2 scene contract, managed renderer lifecycle, and a Radial Wave Disk driven by the live audio-frame bridge. Additional scenes and full M2 performance verification remain in progress.
+- **M2 render core (first slice):** Three.js/WebGL2 scene contract, managed renderer lifecycle, and a Radial Wave Disk driven by the live audio-frame bridge. A follow-up contrast fix brightens the spectrum bars, rings and center core; visual confirmation on a real browser is still pending. Additional scenes and full M2 performance verification remain in progress.
 - **Quality gates** for linting, strict TypeScript, unit tests, production builds, and Playwright smoke tests.
 - **Project documentation** covering product requirements, UX, architecture, engineering decisions, and the test roadmap.
 

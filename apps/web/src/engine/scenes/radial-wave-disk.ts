@@ -13,7 +13,7 @@ import {
 } from './scene';
 
 const BAR_COUNT = 180;
-const INNER_RADIUS = 2.05;
+const INNER_RADIUS = 1.96;
 const REDUCED_MOTION_QUERY = '(prefers-reduced-motion: reduce)';
 
 function barCountForQuality(tier: QualityTier): number {
@@ -64,11 +64,16 @@ export class RadialWaveDiskScene implements Scene {
     this.group = new THREE.Group();
     this.group.name = 'radial-wave-disk-root';
 
-    const geometry = new THREE.BoxGeometry(0.085, 1, 0.105);
+    const geometry = new THREE.BoxGeometry(0.095, 1, 0.12);
     const barMaterial = new THREE.MeshBasicMaterial({
-      vertexColors: true,
+      // Instance colors are supplied via setColorAt; vertexColors=true without a geometry
+      // color attribute can render black on some WebGL paths. Keep the base material white.
+      color: '#ffffff',
+      vertexColors: false,
       transparent: true,
-      opacity: 0.96,
+      opacity: 1,
+      blending: THREE.AdditiveBlending,
+      depthWrite: false,
       toneMapped: false,
     });
     this.bars = new THREE.InstancedMesh(geometry, barMaterial, BAR_COUNT);
@@ -80,14 +85,14 @@ export class RadialWaveDiskScene implements Scene {
 
     this.core = new THREE.Mesh(
       new THREE.SphereGeometry(0.8, 32, 24),
-      new THREE.MeshBasicMaterial({ color: '#101426', transparent: true, opacity: 0.95 }),
+      new THREE.MeshBasicMaterial({ color: '#00c9d6', transparent: true, opacity: 0.94, toneMapped: false }),
     );
     this.group.add(this.core);
 
-    const innerMaterial = new THREE.MeshBasicMaterial({ color: this.colors[0], transparent: true, opacity: 0.68, toneMapped: false });
-    const outerMaterial = new THREE.MeshBasicMaterial({ color: this.colors[2], transparent: true, opacity: 0.36, toneMapped: false });
-    const innerRing = new THREE.Mesh(new THREE.TorusGeometry(INNER_RADIUS, 0.022, 8, 180), innerMaterial);
-    const outerRing = new THREE.Mesh(new THREE.TorusGeometry(INNER_RADIUS + 0.43, 0.012, 6, 180), outerMaterial);
+    const innerMaterial = new THREE.MeshBasicMaterial({ color: this.colors[0], transparent: true, opacity: 0.96, blending: THREE.AdditiveBlending, depthWrite: false, toneMapped: false });
+    const outerMaterial = new THREE.MeshBasicMaterial({ color: this.colors[2], transparent: true, opacity: 0.82, blending: THREE.AdditiveBlending, depthWrite: false, toneMapped: false });
+    const innerRing = new THREE.Mesh(new THREE.TorusGeometry(INNER_RADIUS, 0.028, 8, 180), innerMaterial);
+    const outerRing = new THREE.Mesh(new THREE.TorusGeometry(INNER_RADIUS + 0.43, 0.02, 6, 180), outerMaterial);
     this.innerRing = innerRing;
     this.outerRing = outerRing;
     this.ringMaterials = [innerMaterial, outerMaterial];
@@ -104,10 +109,10 @@ export class RadialWaveDiskScene implements Scene {
     const starGeometry = new THREE.BufferGeometry();
     starGeometry.setAttribute('position', new THREE.Float32BufferAttribute(points, 3));
     const starMaterial = new THREE.PointsMaterial({
-      color: '#8B8DB8',
-      size: 0.027,
+      color: '#b8c9ff',
+      size: 0.038,
       transparent: true,
-      opacity: 0.64,
+      opacity: 0.82,
       sizeAttenuation: true,
     });
     this.stars = new THREE.Points(starGeometry, starMaterial);
@@ -129,9 +134,10 @@ export class RadialWaveDiskScene implements Scene {
       const progress = index / Math.max(1, activeBars - 1);
       const angle = progress * Math.PI * 2;
       const spectrumValue = sampleSpectrum(audioFrame.spectrum, 0.04 + progress * 0.9);
-      const lowFrequencyBias = 0.2 + (Math.sin(angle * 3 + 0.4) * 0.5 + 0.5) * audioFrame.bass * 0.35;
-      const midPulse = audioFrame.mid * (0.12 + 0.08 * Math.sin(angle * 5 + this.elapsed * 1.5));
-      const length = Math.max(0.13, (0.16 + spectrumValue * 1.48 + lowFrequencyBias + midPulse) * scale);
+      const lowFrequencyBias = 0.12 + (0.25 + (Math.sin(angle * 3 + 0.4) * 0.5 + 0.5) * 0.35) * audioFrame.bass;
+      const midPulse = audioFrame.mid * (0.2 + 0.13 * Math.sin(angle * 5 + this.elapsed * 1.5));
+      // Keep quiet passages visible while giving energetic tracks a clearly larger radial response.
+      const length = Math.max(0.22, (0.24 + spectrumValue * 1.9 + lowFrequencyBias + midPulse) * scale);
       this.dummy.position.set(
         Math.cos(angle) * (INNER_RADIUS + length / 2),
         Math.sin(angle) * (INNER_RADIUS + length / 2),
@@ -152,7 +158,8 @@ export class RadialWaveDiskScene implements Scene {
     this.group.rotation.z = Math.sin(this.elapsed * 0.17) * 0.025 * motionScale;
 
     if (this.core !== null && this.core.material instanceof THREE.MeshBasicMaterial) {
-      this.core.material.color.copy(this.coreThemeColor).lerp(this.coreDarkColor, 0.88);
+      const dimAmount = Math.max(0.12, 0.34 - audioFrame.level * 0.2 - audioFrame.bass * 0.08);
+      this.core.material.color.copy(this.coreThemeColor).lerp(this.coreDarkColor, dimAmount);
     }
   }
 
