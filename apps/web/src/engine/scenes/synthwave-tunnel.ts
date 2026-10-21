@@ -46,10 +46,10 @@ void main() {
 }
 `;
 
-function clampQuality(tier: QualityTier): number {
-  if (tier === 'low') return 24;
-  if (tier === 'medium') return 44;
-  return RING_COUNT;
+function drawFractionForQuality(tier: QualityTier): number {
+  if (tier === 'low') return 0.46;
+  if (tier === 'medium') return 0.76;
+  return 1;
 }
 
 /** Neon wireframe tunnel whose ring depth, pulse and palette react to the shared audio frame. */
@@ -65,7 +65,6 @@ export class SynthwaveTunnelScene implements Scene {
   private colorMixes: Float32Array<ArrayBuffer> | null = null;
   private quality: QualityTier = 'high';
   private elapsed = 0;
-  private ringCount = RING_COUNT;
   private disposed = false;
 
   getParamSchema(): readonly SceneParamDescriptor[] {
@@ -81,7 +80,6 @@ export class SynthwaveTunnelScene implements Scene {
     this.disposed = false;
     this.elapsed = 0;
     this.quality = config.quality ?? 'high';
-    this.ringCount = clampQuality(this.quality);
     this.setTheme(config.theme ?? DEFAULT_SCENE_THEME);
 
     const positions: number[] = [];
@@ -122,6 +120,7 @@ export class SynthwaveTunnelScene implements Scene {
     geometry.setAttribute('color', new THREE.Float32BufferAttribute(new Float32Array(depthMixes.length * 3), 3));
     this.colorMixes = new Float32Array(depthMixes);
     this.geometry = geometry;
+    this.setQuality(this.quality);
 
     const material = new THREE.ShaderMaterial({
       uniforms: {
@@ -132,7 +131,8 @@ export class SynthwaveTunnelScene implements Scene {
       },
       vertexShader: VERTEX_SHADER,
       fragmentShader: FRAGMENT_SHADER,
-      vertexColors: true,
+      // The custom shader declares the color attribute explicitly, so no built-in vertex-color prefix is needed.
+      vertexColors: false,
       transparent: true,
       blending: THREE.AdditiveBlending,
       depthWrite: false,
@@ -183,9 +183,10 @@ export class SynthwaveTunnelScene implements Scene {
 
   setQuality(tier: QualityTier): void {
     this.quality = tier;
-    this.ringCount = clampQuality(tier);
-    // All rings are kept intact to preserve tunnel geometry; quality tiers reduce pixel ratio
-    // at the renderer level in a later performance pass. Current quality is surfaced for telemetry.
+    if (this.geometry !== null) {
+      const positions = this.geometry.getAttribute('position');
+      this.geometry.setDrawRange(0, Math.floor(positions.count * drawFractionForQuality(tier)));
+    }
   }
 
   dispose(): void {
