@@ -1,5 +1,6 @@
 import * as THREE from 'three';
 import type { AudioFrame } from '../audio/analysis';
+import { updateBeatEnvelope, visualEnergy } from './visual-response';
 import {
   DEFAULT_SCENE_THEME,
   type ParamFrame,
@@ -21,20 +22,25 @@ uniform float uTime;
 uniform float uBass;
 uniform float uMid;
 uniform float uTreble;
+uniform float uBeatPulse;
 attribute vec3 color;
 varying vec3 vColor;
 varying float vGlow;
 void main() {
   vec3 animated = position;
-  float ripple = sin(uTime * 1.1 + position.z * 0.25);
-  float pulse = 1.0 + uBass * 0.085 + uTreble * sin(uTime * 2.7 + position.z * 0.5) * 0.035;
+  // Scroll rings toward the camera so the tunnel clearly travels during playback.
+  float travel = mod(uTime * (2.0 + uBass * 7.5), 28.0);
+  animated.z = mod(position.z + 25.0 + travel, 28.0) - 25.0;
+  float ripple = sin(uTime * 1.8 + position.z * 0.42);
+  float pulse = 1.0 + uBass * (0.12 + 0.08 * sin(uTime * 3.0 + position.z * 0.4))
+    + uTreble * sin(uTime * 4.2 + position.z * 0.7) * 0.075;
   animated.xy *= pulse;
-  animated.xy += vec2(sin(uTime * 0.22 + position.z * 0.08), cos(uTime * 0.18 + position.z * 0.07)) * (uMid * 0.035);
-  animated.z += ripple * 0.04;
+  animated.xy += vec2(sin(uTime * 0.55 + position.z * 0.12), cos(uTime * 0.46 + position.z * 0.10)) * (0.045 + uMid * 0.18);
+  animated.z += ripple * (0.07 + uTreble * 0.20);
   vec4 viewPosition = modelViewMatrix * vec4(animated, 1.0);
   gl_Position = projectionMatrix * viewPosition;
   vColor = color;
-  vGlow = 0.78 + uBass * 0.5 + uTreble * 0.36;
+  vGlow = 0.86 + uBass * 0.95 + uTreble * 0.72 + uBeatPulse * 0.7;
 }
 `;
 
@@ -65,6 +71,7 @@ export class SynthwaveTunnelScene implements Scene {
   private colorMixes: Float32Array<ArrayBuffer> | null = null;
   private quality: QualityTier = 'high';
   private elapsed = 0;
+  private beatPulse = 0;
   private disposed = false;
 
   getParamSchema(): readonly SceneParamDescriptor[] {
@@ -92,7 +99,7 @@ export class SynthwaveTunnelScene implements Scene {
     const pointsAt = (ring: number, segment: number): [number, number, number] => {
       const progress = ring / (RING_COUNT - 1);
       const angle = (segment / SEGMENTS_PER_RING) * Math.PI * 2;
-      const radius = 0.24 + (1 - progress) * 5.15;
+      const radius = 0.22 + (1 - progress) * 3.1;
       const z = TUNNEL_NEAR_Z - progress * TUNNEL_DEPTH;
       return [Math.cos(angle) * radius, Math.sin(angle) * radius, z];
     };
@@ -128,6 +135,7 @@ export class SynthwaveTunnelScene implements Scene {
         uBass: { value: 0 },
         uMid: { value: 0 },
         uTreble: { value: 0 },
+        uBeatPulse: { value: 0 },
       },
       vertexShader: VERTEX_SHADER,
       fragmentShader: FRAGMENT_SHADER,
@@ -151,11 +159,16 @@ export class SynthwaveTunnelScene implements Scene {
     const speed = Math.max(0, Math.min(2, params.tunnelSpeed ?? 1));
     this.elapsed += dt * (0.55 + speed * 0.65 + audioFrame.level * 0.25);
     this.material.uniforms.uTime.value = this.elapsed;
-    this.material.uniforms.uBass.value = audioFrame.bass;
-    this.material.uniforms.uMid.value = audioFrame.mid;
-    this.material.uniforms.uTreble.value = audioFrame.treble;
-    this.lines.rotation.z = Math.sin(this.elapsed * 0.12) * 0.035;
-    this.lines.scale.setScalar(1 + audioFrame.bass * 0.035);
+    this.beatPulse = updateBeatEnvelope(this.beatPulse, audioFrame.beat, dt, 4.2);
+    const bass = visualEnergy(audioFrame.bass, 1.8, 0.7);
+    const mid = visualEnergy(audioFrame.mid, 1.65, 0.72);
+    const treble = visualEnergy(audioFrame.treble, 1.9, 0.68);
+    this.material.uniforms.uBass.value = bass;
+    this.material.uniforms.uMid.value = mid;
+    this.material.uniforms.uTreble.value = treble;
+    this.material.uniforms.uBeatPulse.value = this.beatPulse;
+    this.lines.rotation.z = Math.sin(this.elapsed * 0.23) * (0.045 + mid * 0.08);
+    this.lines.scale.setScalar(1 + bass * 0.085 + this.beatPulse * 0.055);
   }
 
   render(): void {
