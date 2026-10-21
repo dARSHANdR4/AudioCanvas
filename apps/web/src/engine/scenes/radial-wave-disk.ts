@@ -31,15 +31,15 @@ export class RadialWaveDiskScene implements Scene {
   private context: RenderContext | null = null;
   private group = new THREE.Group();
   private bars: THREE.InstancedMesh | null = null;
-  private barMaterial: THREE.MeshBasicMaterial | null = null;
   private core: THREE.Mesh | null = null;
   private innerRing: THREE.Mesh | null = null;
   private outerRing: THREE.Mesh | null = null;
-  private rings: THREE.Mesh[] = [];
   private ringMaterials: THREE.MeshBasicMaterial[] = [];
   private stars: THREE.Points | null = null;
   private dummy = new THREE.Object3D();
   private colors: readonly [string, string, string] = DEFAULT_SCENE_THEME.colors;
+  private readonly coreThemeColor = new THREE.Color(DEFAULT_SCENE_THEME.colors[0]);
+  private readonly coreDarkColor = new THREE.Color('#101426');
   private quality: QualityTier = 'high';
   private reducedMotion = false;
   private elapsed = 0;
@@ -66,13 +66,13 @@ export class RadialWaveDiskScene implements Scene {
     this.group.name = 'radial-wave-disk-root';
 
     const geometry = new THREE.BoxGeometry(0.085, 1, 0.105);
-    this.barMaterial = new THREE.MeshBasicMaterial({
+    const barMaterial = new THREE.MeshBasicMaterial({
       vertexColors: true,
       transparent: true,
       opacity: 0.96,
       toneMapped: false,
     });
-    this.bars = new THREE.InstancedMesh(geometry, this.barMaterial, BAR_COUNT);
+    this.bars = new THREE.InstancedMesh(geometry, barMaterial, BAR_COUNT);
     this.bars.instanceMatrix.setUsage(THREE.DynamicDrawUsage);
     this.bars.frustumCulled = false;
     this.bars.count = barCountForQuality(this.quality);
@@ -91,7 +91,6 @@ export class RadialWaveDiskScene implements Scene {
     const outerRing = new THREE.Mesh(new THREE.TorusGeometry(INNER_RADIUS + 0.43, 0.012, 6, 180), outerMaterial);
     this.innerRing = innerRing;
     this.outerRing = outerRing;
-    this.rings = [innerRing, outerRing];
     this.ringMaterials = [innerMaterial, outerMaterial];
     this.group.add(innerRing, outerRing);
 
@@ -118,7 +117,7 @@ export class RadialWaveDiskScene implements Scene {
     context.scene.add(this.group);
   }
 
-  update(audioFrame: AudioFrame, params: ParamFrame = DEFAULT_SCENE_PARAMS, dt: number): void {
+  update(audioFrame: AudioFrame, params: ParamFrame, dt: number): void {
     if (this.disposed || this.bars === null) return;
     this.elapsed += dt;
     const scale = Math.max(0, Math.min(2, params.meshScale ?? 1));
@@ -154,8 +153,7 @@ export class RadialWaveDiskScene implements Scene {
     this.group.rotation.z = Math.sin(this.elapsed * 0.17) * 0.025 * motionScale;
 
     if (this.core !== null && this.core.material instanceof THREE.MeshBasicMaterial) {
-      const tint = new THREE.Color(this.colors[0]);
-      this.core.material.color.copy(tint).lerp(new THREE.Color('#101426'), 0.88);
+      this.core.material.color.copy(this.coreThemeColor).lerp(this.coreDarkColor, 0.88);
     }
   }
 
@@ -167,6 +165,7 @@ export class RadialWaveDiskScene implements Scene {
 
   setTheme(theme: SceneTheme): void {
     this.colors = theme.colors;
+    this.coreThemeColor.set(this.colors[0]);
     if (this.bars !== null) this.applyBarColors();
     if (this.ringMaterials.length > 0) {
       this.ringMaterials[0]?.color.set(this.colors[0]);
@@ -193,11 +192,9 @@ export class RadialWaveDiskScene implements Scene {
     });
     this.context = null;
     this.bars = null;
-    this.barMaterial = null;
     this.core = null;
     this.innerRing = null;
     this.outerRing = null;
-    this.rings = [];
     this.ringMaterials = [];
     this.stars = null;
   }
