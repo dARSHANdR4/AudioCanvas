@@ -41,3 +41,8 @@ Record material implementation choices and unresolved specification gaps here. T
 
 | DEC-019 | Use Three.js with a single managed WebGL2 canvas for the render core; pass the latest audio frame through a mutable bridge outside React state. | Keeps rendering independent from React re-renders, allows the scene to be disposed cleanly, and reuses M1's typed-array analysis output. The first scene is Radial Wave Disk; the remaining scenes and scene-switch lifecycle are still required to complete M2. | Accepted for M2 |
 | DEC-020 | Start the render quality tier at high and drop to medium/low if measured render work exceeds 20 ms for a sustained two-second window. | Implements the SRS adaptive-quality direction without changing audio playback; tiers reduce the visible instance count in the first scene. Reference-device 60 FPS verification remains pending. | Initial implementation; performance validation pending |
+
+
+## M2 visual contrast correction
+
+| DEC-021 | Radial Wave Disk instance bars use instancing colors, not vertex-color attributes; use a white base material, additive blending and brighter band/ring colors. | The first live screenshot showed the ring/core but the radial bars were nearly black. The instanced mesh already sets per-instance colors; enabling vertexColors on geometry without a color attribute can suppress those intended colors. Increase minimum bar length and ring opacity so low-energy audio still reads clearly. | Accepted; visual confirmation pending |
