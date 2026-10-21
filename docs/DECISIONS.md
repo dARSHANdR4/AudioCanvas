@@ -60,3 +60,17 @@ Record material implementation choices and unresolved specification gaps here. T
 | DEC-025 | Shape low normalized band levels only at the visual layer, using a bounded power curve and gain; leave the underlying analyser readings unchanged. Add a decaying beat envelope for punchier movement. | Live user feedback found that vortex and tunnel deviations were hard to notice. Visual-only shaping makes quiet-but-real energy legible without changing the audio meters or analysis contract. | Accepted; browser re-test pending |
 | DEC-026 | Drive Synthwave Tunnel depth coordinates with continuous wrapped travel toward the camera, and increase band/beat-driven pulse and color intensity. | A subtle scale/rotation-only response did not communicate forward motion. The tunnel now has a continuous travel component plus visible bass/mid/treble accents. | Accepted; reference-device performance pending |
 | DEC-027 | Increase Particle Vortex angular drift, radial expansion, vertical movement and particle size as a function of shaped audio energy. | The previous particle field appeared nearly static for the user's test. GPU vertex animation remains in place; only shader coefficients and visual-energy inputs are strengthened. | Accepted; browser re-test pending |
+
+
+## Visualization variety research and M2 scene library expansion
+
+External references reviewed:
+- MDN Web Audio visualizations guide: https://developer.mozilla.org/en-US/docs/Web/API/Web_Audio_API/Visualizations_with_Web_Audio_API
+- MDN AnalyserNode time-domain data: https://developer.mozilla.org/en-US/docs/Web/API/AnalyserNode/getByteTimeDomainData
+- MilkDrop preset-authoring guide: https://milkdrop.org/resources/preset-authoring
+- Butterchurn WebGL/MilkDrop implementation: https://github.com/jberg/butterchurn
+- Three.js AudioAnalyser reference: https://threejs.org/docs/pages/AudioAnalyser.html
+
+| DEC-028 | Expand the scene set with four distinct visual languages: time-domain oscilloscope ribbon, historical spectrogram waterfall, symmetric kaleidoscope mandala, and a deforming liquid orb. | Waveform scenes need time-domain samples, while a waterfall needs a short history of frequency bins. Symmetry and a deformed 3D mesh produce silhouettes different from the existing spectrum disk, particle vortex and tunnel. | Accepted; live screenshot feedback pending |
+| DEC-029 | Keep visualization-family processing separate from the core audio meters; pass the latest waveform as a reusable typed array alongside the FFT spectrum in AudioFrame. | Enables a real waveform/oscilloscope view without reconstructing time-domain shape from frequency bins. The analysis frame reuses its array rather than allocating on each animation frame. | Accepted |
+| DEC-030 | Document the scene taxonomy and future candidates separately from the implementation status. | MilkDrop/Butterchurn demonstrates the breadth of programmable waves, custom shapes, equations and pixel-shader transformations; the native AudioCanvas scene library is inspired by these categories but does not copy external presets. | Accepted |

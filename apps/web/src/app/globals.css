@@ -509,3 +509,21 @@ button:disabled { cursor: not-allowed; opacity: 0.58; }
 .scene-card--active .scene-card__name { color: #f2f2fa; }
 .scene-card__status { display: inline-flex; align-items: center; justify-content: center; color: #8585A2; font-size: 12px; }
 .scene-card--active .scene-card__status { color: var(--cyan); text-shadow: 0 0 9px rgba(0,245,255,.7); }
+
+/* Expanded visualization library: four visual languages beyond bars, particles and tunnel. */
+.scene-card-list { max-height: calc(100vh - 245px); overflow-y: auto; overscroll-behavior: contain; scrollbar-width: thin; scrollbar-color: rgba(141,122,255,.32) transparent; padding-right: 3px; }
+.scene-thumb--waveform { background: linear-gradient(180deg, #121a31, #11111d); }
+.scene-thumb--waveform .scene-thumb__orbit { width: 48px; height: 1px; border: 0; border-radius: 0; background: #00f5ff; box-shadow: 0 0 5px #00f5ff, 0 -7px 0 -0.1px rgba(0,245,255,.65), 0 7px 0 -0.1px rgba(0,245,255,.65); transform: rotate(-8deg); }
+.scene-thumb--waveform .scene-thumb__core { width: 4px; height: 30px; border-radius: 3px; border-color: #ff2bd6; background: #ff2bd6; }
+.scene-thumb--spectrogram { background: linear-gradient(135deg, #1b133b, #092a43 52%, #311334); }
+.scene-thumb--spectrogram .scene-thumb__orbit { width: 48px; height: 34px; border: 0; border-radius: 0; background: repeating-linear-gradient(90deg, rgba(0,245,255,.9) 0 2px, transparent 2px 5px), linear-gradient(0deg, transparent 0 35%, rgba(255,43,214,.5)); transform: perspective(35px) rotateX(28deg); box-shadow: 0 0 14px rgba(0,245,255,.25); }
+.scene-thumb--spectrogram .scene-thumb__core { display: none; }
+.scene-thumb--mandala { background: radial-gradient(circle, #372050, #11111d 74%); }
+.scene-thumb--mandala .scene-thumb__orbit { width: 38px; height: 38px; border: 1px solid #ff2bd6; border-radius: 38% 62% 50% 50%; box-shadow: 0 0 0 4px rgba(141,122,255,.18), 0 0 0 8px rgba(0,245,255,.12), inset 0 0 10px rgba(255,43,214,.38); transform: rotate(38deg); }
+.scene-thumb--mandala .scene-thumb__core { width: 8px; height: 8px; background: #00f5ff; border-color: #00f5ff; }
+.scene-thumb--liquid { background: radial-gradient(circle at 40% 35%, #28385f, #11111d 72%); }
+.scene-thumb--liquid .scene-thumb__orbit { width: 36px; height: 36px; border: 2px solid #00f5ff; border-radius: 44% 56% 59% 41% / 43% 38% 62% 57%; box-shadow: 0 0 13px rgba(0,245,255,.28), inset 0 0 14px rgba(141,122,255,.35); transform: rotate(-18deg); }
+.scene-thumb--liquid .scene-thumb__core { width: 18px; height: 18px; background: rgba(141,122,255,.55); border-color: #ff2bd6; }
+@media (max-height: 760px) {
+  .scene-card-list { max-height: calc(100vh - 190px); }
+}

@@ -42,7 +42,7 @@ export function StudioShell() {
           <SceneSelector />
           <div className="sidebar-note">
             <span className="status-dot status-dot--muted" />
-            <p>Choose among three live audio-reactive scenes. Switching scenes keeps your audio playing.</p>
+            <p>Choose from seven distinct visual styles. Switching scenes keeps your audio playing.</p>
           </div>
         </aside>
 
@@ -52,7 +52,7 @@ export function StudioShell() {
               <p className="eyebrow">CANVAS VIEWPORT</p>
               <h1>Your sound, reimagined.</h1>
             </div>
-            <span className="state-pill"><span className="status-dot" /> M2 RENDER CORE</span>
+            <span className="state-pill"><span className="status-dot" /> M2 · VISUAL LIBRARY</span>
           </div>
           <div className="stage-wrap">
             <VisualizerCanvas />
@@ -60,7 +60,7 @@ export function StudioShell() {
             <div className="stage-corner stage-corner--bottom-right"><span>WEBGL2</span><span className="status-dot" /> <span data-scene-label>RADIAL WAVE DISK</span></div>
           </div>
           <AudioWorkbench />
-          <p className="studio-mobile-note">All three M2 scenes are selectable and react to the shared audio analysis. The renderer swaps scenes without restarting audio.</p>
+          <p className="studio-mobile-note">Seven visual styles are available: spectrum, particles, tunnel, waveform, spectrogram, mandala and liquid mesh. The renderer swaps scenes without restarting audio.</p>
         </section>
 
         <aside aria-label="Customization panels" className="studio-inspector">
@@ -101,7 +101,7 @@ export function StudioShell() {
           </section>
         </aside>
       </div>
-      <footer className="studio-statusbar"><span><span className="status-dot" /> M2 · RENDER CORE PREVIEW</span><span>60 FPS TARGET</span><span>LOCAL-FIRST BY DESIGN</span><Link href="/legal/photosensitivity">Photosensitivity notice</Link></footer>
+      <footer className="studio-statusbar"><span><span className="status-dot" /> M2 · VISUAL LIBRARY PREVIEW</span><span>60 FPS TARGET</span><span>LOCAL-FIRST BY DESIGN</span><Link href="/legal/photosensitivity">Photosensitivity notice</Link></footer>
     </main>
   );
 }

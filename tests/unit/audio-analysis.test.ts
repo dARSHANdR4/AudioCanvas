@@ -80,3 +80,19 @@ describe('M1 audio analysis', () => {
     expect(state.frame.spectrum.every((value) => value === 0)).toBe(true);
   });
 });
+
+  it('captures time-domain samples for waveform scenes without replacing the shared typed buffer', () => {
+    const state = createAudioAnalysisState(44_100, { fftSize: 512 });
+    const samples = new Float32Array(512);
+    samples[0] = -0.75;
+    samples[255] = 0.5;
+    const originalWaveform = state.frame.waveform;
+
+    const frame = updateAudioAnalysis(state, samples, 0.1);
+
+    expect(frame.waveform).toBe(originalWaveform);
+    expect(frame.waveform[0]).toBeCloseTo(-0.75);
+    expect(frame.waveform[255]).toBeCloseTo(0.5);
+    resetAudioAnalysis(state);
+    expect(frame.waveform.every((sample) => sample === 0)).toBe(true);
+  });

@@ -3,11 +3,15 @@ import { createScene, SCENE_OPTIONS } from '../../apps/web/src/engine/scenes/sce
 import { getSelectedScene, selectScene, subscribeToSceneSelection } from '../../apps/web/src/engine/scenes/scene-selection-store';
 
 describe('M2 scene registry', () => {
-  it('registers the three required visual scenes with stable identifiers', () => {
+  it('registers seven distinct visual styles with stable identifiers', () => {
     expect(SCENE_OPTIONS.map((scene) => scene.id)).toEqual([
       'radial-wave-disk',
       'particle-vortex',
       'synthwave-tunnel',
+      'waveform-scope',
+      'spectrogram-waterfall',
+      'kaleidoscope-mandala',
+      'liquid-orb',
     ]);
   });
 
