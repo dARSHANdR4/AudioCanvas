@@ -2,7 +2,6 @@ import * as THREE from 'three';
 import type { AudioFrame } from '../audio/analysis';
 import { sampleSpectrum } from './spectrum-sampling';
 import {
-  DEFAULT_SCENE_PARAMS,
   DEFAULT_SCENE_THEME,
   type ParamFrame,
   type QualityTier,
