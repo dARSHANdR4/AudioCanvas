@@ -136,6 +136,7 @@ export class LiquidOrbScene implements Scene {
       new THREE.MeshBasicMaterial({ color: this.colors[1], transparent: true, opacity: 0.3, blending: THREE.AdditiveBlending, toneMapped: false }),
     );
     context.scene.add(this.innerCore);
+    this.setQuality(this.quality);
   }
 
   update(frame: AudioFrame, params: ParamFrame, dt: number): void {
