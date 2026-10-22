@@ -1,10 +1,12 @@
 export type CameraPreset = 'front' | 'side' | 'top' | 'low-angle' | 'cinematic';
 export type CameraToggle = 'rotate' | 'pan' | 'zoom';
+export type ObjectAxis = 'x' | 'y' | 'z';
 
 export type CameraCommand =
   | { type: 'preset'; preset: CameraPreset }
   | { type: 'reset' }
   | { type: 'roll'; degrees: number }
+  | { type: 'axis'; axis: ObjectAxis; degrees: number }
   | { type: 'sensitivity'; value: number }
   | { type: 'toggle'; control: CameraToggle; enabled: boolean };
 
