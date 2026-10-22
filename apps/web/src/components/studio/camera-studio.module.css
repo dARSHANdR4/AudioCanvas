@@ -48,7 +48,7 @@
 
 .panel {
   width: min(310px, calc(100vw - 44px));
-  max-height: min(72vh, 540px);
+  max-height: min(68vh, calc(100% - 52px), 540px);
   overflow: auto;
   padding: 15px;
   border: 1px solid rgba(141, 122, 255, .31);
@@ -251,6 +251,7 @@
 
   .panel {
     width: min(290px, calc(100vw - 32px));
+    max-height: min(68vh, calc(100% - 48px), 440px);
     padding: 12px;
   }
 }
