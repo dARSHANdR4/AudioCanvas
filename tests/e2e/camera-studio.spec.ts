@@ -1,12 +1,12 @@
 import { expect, test } from '@playwright/test';
 
 test('Camera Studio provides camera presets, roll and a front-view reset', async ({ page }) => {
+  // Keep this interaction test focused on Camera Studio; the dedicated first-visit
+  // safety notice has its own behavior and must not race client hydration here.
+  await page.addInitScript(() => {
+    window.localStorage.setItem('audiocanvas.photosensitivity-acknowledged.v1', 'true');
+  });
   await page.goto('/studio');
-
-  const noticeClose = page.locator('.photosensitivity-notice__close');
-  if (await noticeClose.isVisible().catch(() => false)) {
-    await noticeClose.click();
-  }
 
   const canvas = page.locator('.visualizer-canvas');
   await expect(canvas).toHaveAttribute('data-render-status', 'ready');
