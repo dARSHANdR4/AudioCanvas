@@ -13,8 +13,9 @@ import {
   type SceneTheme,
 } from './scene';
 
-const POINTS_PER_RING = 360;
-const RING_COUNT = 6;
+const POINTS_PER_RING = 448;
+const RING_COUNT = 8;
+const SPOKE_COUNT = 48;
 
 interface MandalaRing {
   geometry: THREE.BufferGeometry;
@@ -31,7 +32,11 @@ export class KaleidoscopeMandalaScene implements Scene {
 
   private context: RenderContext | null = null;
   private rings: MandalaRing[] = [];
+  private spokes: THREE.LineSegments<THREE.BufferGeometry, THREE.LineBasicMaterial> | null = null;
+  private spokeGeometry: THREE.BufferGeometry | null = null;
+  private spokeMaterial: THREE.LineBasicMaterial | null = null;
   private core: THREE.Mesh | null = null;
+  private coreCage: THREE.Mesh<THREE.IcosahedronGeometry, THREE.MeshBasicMaterial> | null = null;
   private colors: readonly [string, string, string] = DEFAULT_SCENE_THEME.colors;
   private quality: QualityTier = 'high';
   private elapsed = 0;
@@ -57,7 +62,7 @@ export class KaleidoscopeMandalaScene implements Scene {
       const material = new THREE.LineBasicMaterial({
         color: this.colors[ringIndex % 3],
         transparent: true,
-        opacity: 0.82 - ringIndex * 0.055,
+        opacity: 0.92 - ringIndex * 0.065,
         blending: THREE.AdditiveBlending,
         depthWrite: false,
         toneMapped: false,
@@ -70,16 +75,48 @@ export class KaleidoscopeMandalaScene implements Scene {
         geometry,
         material,
         line,
-        radius: 0.44 + ringIndex * 0.44,
-        petals: 5 + ringIndex * 3,
+        radius: 0.34 + ringIndex * 0.42,
+        petals: 7 + ringIndex * 4,
         phase: ringIndex * 0.47,
       });
     }
-    this.core = new THREE.Mesh(
-      new THREE.SphereGeometry(0.22, 24, 16),
-      new THREE.MeshBasicMaterial({ color: this.colors[1], transparent: true, opacity: 0.9, toneMapped: false }),
+    const spokePositions = new Float32Array(SPOKE_COUNT * 2 * 3);
+    this.spokeGeometry = new THREE.BufferGeometry();
+    this.spokeGeometry.setAttribute(
+      'position',
+      new THREE.BufferAttribute(spokePositions, 3).setUsage(THREE.DynamicDrawUsage),
     );
-    context.scene.add(this.core);
+    this.spokeMaterial = new THREE.LineBasicMaterial({
+      color: this.colors[0],
+      transparent: true,
+      opacity: 0.32,
+      blending: THREE.AdditiveBlending,
+      depthWrite: false,
+      toneMapped: false,
+    });
+    this.spokes = new THREE.LineSegments(this.spokeGeometry, this.spokeMaterial);
+    this.spokes.frustumCulled = false;
+    this.spokes.name = 'mandala-radial-facets';
+    context.scene.add(this.spokes);
+
+    this.core = new THREE.Mesh(
+      new THREE.SphereGeometry(0.18, 24, 16),
+      new THREE.MeshBasicMaterial({ color: this.colors[1], transparent: true, opacity: 0.96, toneMapped: false }),
+    );
+    this.coreCage = new THREE.Mesh(
+      new THREE.IcosahedronGeometry(0.5, 1),
+      new THREE.MeshBasicMaterial({
+        color: this.colors[0],
+        wireframe: true,
+        transparent: true,
+        opacity: 0.78,
+        blending: THREE.AdditiveBlending,
+        depthWrite: false,
+        toneMapped: false,
+      }),
+    );
+    this.coreCage.renderOrder = 2;
+    context.scene.add(this.core, this.coreCage);
   }
 
   update(frame: AudioFrame, params: ParamFrame, dt: number): void {
@@ -111,7 +148,33 @@ export class KaleidoscopeMandalaScene implements Scene {
       attribute.needsUpdate = true;
       ring.line.rotation.z = this.elapsed * speed * (ringIndex % 2 === 0 ? 0.055 : -0.045);
     }
-    this.core?.scale.setScalar(1 + frame.bass * 0.8 + frame.level * 0.7);
+    if (this.spokeGeometry !== null) {
+      const attribute = this.spokeGeometry.getAttribute('position') as THREE.BufferAttribute;
+      const positions = attribute.array as Float32Array;
+      const bass = visualEnergy(frame.bass, 1.55, 0.72);
+      const treble = visualEnergy(frame.treble, 1.6, 0.68);
+      const rotation = this.elapsed * 0.08;
+      for (let spoke = 0; spoke < SPOKE_COUNT; spoke += 1) {
+        const angle = (spoke / SPOKE_COUNT) * Math.PI * 2 + rotation;
+        const inner = 0.54 + bass * 0.08;
+        const outer = 2.88 + bass * 0.22 + Math.sin(this.elapsed * 1.6 + spoke * 0.4) * (0.08 + treble * 0.16);
+        const offset = spoke * 6;
+        positions[offset] = Math.cos(angle) * inner;
+        positions[offset + 1] = Math.sin(angle) * inner;
+        positions[offset + 2] = Math.sin(angle * 3 + this.elapsed) * (0.04 + treble * 0.1);
+        positions[offset + 3] = Math.cos(angle) * outer;
+        positions[offset + 4] = Math.sin(angle) * outer;
+        positions[offset + 5] = Math.sin(angle * 3 + this.elapsed + 1.2) * (0.08 + treble * 0.14);
+      }
+      attribute.needsUpdate = true;
+    }
+    this.core?.scale.setScalar(1 + frame.bass * 1.0 + frame.level * 0.7);
+    if (this.coreCage !== null) {
+      this.coreCage.rotation.x = this.elapsed * 0.34;
+      this.coreCage.rotation.y = -this.elapsed * 0.27;
+      this.coreCage.rotation.z = this.elapsed * 0.18;
+      this.coreCage.scale.setScalar(1 + frame.bass * 0.2 + frame.treble * 0.12);
+    }
   }
 
   render(): void {
@@ -121,13 +184,17 @@ export class KaleidoscopeMandalaScene implements Scene {
   setTheme(theme: SceneTheme): void {
     this.colors = theme.colors;
     this.rings.forEach((ring, index) => ring.material.color.set(this.colors[index % 3]));
+    this.spokeMaterial?.color.set(this.colors[0]);
     if (this.core?.material instanceof THREE.MeshBasicMaterial) this.core.material.color.set(this.colors[1]);
+    if (this.coreCage?.material instanceof THREE.MeshBasicMaterial) this.coreCage.material.color.set(this.colors[2]);
   }
 
   setQuality(tier: QualityTier): void {
     this.quality = tier;
-    const visibleRings = tier === 'low' ? 3 : tier === 'medium' ? 4 : RING_COUNT;
+    const visibleRings = tier === 'low' ? 4 : tier === 'medium' ? 6 : RING_COUNT;
     this.rings.forEach((ring, index) => { ring.line.visible = index < visibleRings; });
+    if (this.spokes !== null) this.spokes.visible = tier !== 'low';
+    if (this.coreCage !== null) this.coreCage.visible = tier !== 'low';
   }
 
   dispose(): void {
@@ -135,15 +202,27 @@ export class KaleidoscopeMandalaScene implements Scene {
     this.disposed = true;
     if (this.context !== null) {
       this.rings.forEach((ring) => this.context?.scene.remove(ring.line));
+      if (this.spokes !== null) this.context.scene.remove(this.spokes);
       if (this.core !== null) this.context.scene.remove(this.core);
+      if (this.coreCage !== null) this.context.scene.remove(this.coreCage);
     }
     this.rings.forEach((ring) => { ring.geometry.dispose(); ring.material.dispose(); });
     this.rings = [];
+    this.spokeGeometry?.dispose();
+    this.spokeMaterial?.dispose();
     if (this.core !== null) {
       this.core.geometry.dispose();
       if (this.core.material instanceof THREE.Material) this.core.material.dispose();
     }
+    if (this.coreCage !== null) {
+      this.coreCage.geometry.dispose();
+      this.coreCage.material.dispose();
+    }
     this.context = null;
     this.core = null;
+    this.coreCage = null;
+    this.spokes = null;
+    this.spokeGeometry = null;
+    this.spokeMaterial = null;
   }
 }
