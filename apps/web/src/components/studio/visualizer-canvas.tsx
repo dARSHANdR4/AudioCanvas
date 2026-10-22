@@ -118,13 +118,7 @@ export function VisualizerCanvas() {
           applyCameraPreset(command.preset);
           break;
         case 'reset':
-          cameraRollDegrees = 0;
-          activeSceneCamera.up.set(0, 1, 0);
-          cameraControls.reset();
-          cameraControls.update();
-          cameraControls.saveState();
-          host.dataset.cameraPreset = 'front';
-          host.dataset.cameraRoll = '0';
+          applyCameraPreset('front');
           break;
         case 'roll':
           cameraRollDegrees = THREE.MathUtils.clamp(command.degrees, -180, 180);
