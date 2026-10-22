@@ -5,6 +5,7 @@ import {
   dispatchCameraCommand,
   type CameraPreset,
   type CameraToggle,
+  type ObjectAxis,
 } from '@/engine/scenes/camera-controls-store';
 import styles from './camera-studio.module.css';
 
@@ -26,6 +27,7 @@ export function CameraStudio() {
   const [open, setOpen] = useState(false);
   const [roll, setRoll] = useState(0);
   const [sensitivity, setSensitivity] = useState(1);
+  const [axes, setAxes] = useState<Record<ObjectAxis, number>>({ x: 0, y: 0, z: 0 });
   const [enabled, setEnabled] = useState<Record<CameraToggle, boolean>>({
     rotate: true,
     pan: true,
@@ -50,10 +52,14 @@ export function CameraStudio() {
   const resetView = () => {
     setRoll(0);
     setSensitivity(1);
+    setAxes({ x: 0, y: 0, z: 0 });
     setEnabled({ rotate: true, pan: true, zoom: true });
     dispatchCameraCommand({ type: 'reset' });
     dispatchCameraCommand({ type: 'roll', degrees: 0 });
     dispatchCameraCommand({ type: 'sensitivity', value: 1 });
+    (['x', 'y', 'z'] as const).forEach((axis) => {
+      dispatchCameraCommand({ type: 'axis', axis, degrees: 0 });
+    });
     TOGGLES.forEach(({ id }) => {
       dispatchCameraCommand({ type: 'toggle', control: id, enabled: true });
     });
@@ -183,6 +189,35 @@ export function CameraStudio() {
               type="range"
               value={roll}
             />
+          </div>
+
+          <div className={styles.section}>
+            <div className={styles.sectionHeading}>
+              <span>OBJECT AXES</span>
+              <span>X / Y / Z</span>
+            </div>
+            {(['x', 'y', 'z'] as const).map((axis) => (
+              <div key={axis}>
+                <label className={styles.sliderLabel}>
+                  <span>Rotation {axis.toUpperCase()}</span>
+                  <output>{axes[axis]}°</output>
+                </label>
+                <input
+                  aria-label={`Object ${axis.toUpperCase()} axis`}
+                  className={styles.slider}
+                  max="180"
+                  min="-180"
+                  onChange={(event) => {
+                    const degrees = Number(event.currentTarget.value);
+                    setAxes((current) => ({ ...current, [axis]: degrees }));
+                    dispatchCameraCommand({ type: 'axis', axis, degrees });
+                  }}
+                  step="1"
+                  type="range"
+                  value={axes[axis]}
+                />
+              </div>
+            ))}
           </div>
 
           <footer className={styles.footer}>
