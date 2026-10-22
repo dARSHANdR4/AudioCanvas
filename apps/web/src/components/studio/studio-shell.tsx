@@ -1,10 +1,9 @@
 import Link from 'next/link';
 import { Brand } from '../brand';
 import { VisualizerCanvas } from './visualizer-canvas';
+import { CameraStudio } from './camera-studio';
 import { AudioWorkbench } from './audio-workbench';
 import { SceneSelector } from './scene-selector';
-
-
 
 export function StudioShell() {
   return (
@@ -56,6 +55,7 @@ export function StudioShell() {
           </div>
           <div className="stage-wrap">
             <VisualizerCanvas />
+            <CameraStudio />
             <div className="stage-corner stage-corner--top-left"><span>AC / 001</span><span>16:9</span></div>
             <div className="stage-corner stage-corner--bottom-right"><span>WEBGL2</span><span className="status-dot" /> <span data-scene-label>RADIAL WAVE DISK</span></div>
           </div>
