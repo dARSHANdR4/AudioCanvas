@@ -4,7 +4,11 @@ test('Camera Studio provides camera presets, roll and a front-view reset', async
   // Keep this interaction test focused on Camera Studio; the dedicated first-visit
   // safety notice has its own behavior and must not race client hydration here.
   await page.addInitScript(() => {
-    window.localStorage.setItem('audiocanvas.photosensitivity-acknowledged.v1', 'true');
+    try {
+      window.localStorage.setItem('audiocanvas.photosensitivity-acknowledged.v1', 'true');
+    } catch {
+      // The initial about:blank page can have an opaque origin before navigation.
+    }
   });
   await page.goto('/studio');
 
