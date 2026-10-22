@@ -15,9 +15,11 @@ describe('camera control command bridge', () => {
 
     dispatchCameraCommand({ type: 'preset', preset: 'cinematic' });
     dispatchCameraCommand({ type: 'roll', degrees: 35 });
+    dispatchCameraCommand({ type: 'axis', axis: 'y', degrees: -45 });
 
     expect(listener).toHaveBeenNthCalledWith(1, { type: 'preset', preset: 'cinematic' });
     expect(listener).toHaveBeenNthCalledWith(2, { type: 'roll', degrees: 35 });
+    expect(listener).toHaveBeenNthCalledWith(3, { type: 'axis', axis: 'y', degrees: -45 });
     unsubscribe();
   });
 
