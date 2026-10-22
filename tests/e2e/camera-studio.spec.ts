@@ -27,8 +27,16 @@ test('Camera Studio provides camera presets, roll and a front-view reset', async
   await page.keyboard.press('End');
   await expect(canvas).toHaveAttribute('data-camera-roll', '180');
 
+  const xAxisSlider = panel.getByRole('slider', { name: 'Object X axis' });
+  await xAxisSlider.focus();
+  await page.keyboard.press('End');
+  await expect(canvas).toHaveAttribute('data-object-axis-x', '180');
+
   await panel.getByRole('button', { name: 'Reset view' }).click();
   await expect(canvas).toHaveAttribute('data-camera-preset', 'front');
   await expect(canvas).toHaveAttribute('data-camera-roll', '0');
+  await expect(canvas).toHaveAttribute('data-object-axis-x', '0');
+  await expect(canvas).toHaveAttribute('data-object-axis-y', '0');
+  await expect(canvas).toHaveAttribute('data-object-axis-z', '0');
   await expect(canvas).toHaveAttribute('data-scene', initialScene ?? '');
 });
