@@ -38,23 +38,41 @@ varying vec2 vUv;
 varying vec3 vColor;
 varying float vAlpha;
 void main() {
-  float angle = atan(iPosition.y, iPosition.x);
-  angle += uTime * (0.48 + uMid * 1.75) + iPhase * (0.14 + 0.18 * uTurbulence);
-  float radius = length(iPosition.xy);
-  radius += sin(uTime * 1.7 + iPhase * 5.0) * (0.18 + uTurbulence * 0.42);
-  radius += uBass * (0.34 + 0.58 * sin(iPhase * 7.0));
+  float baseAngle = atan(iPosition.y, iPosition.x);
+  float baseRadius = length(iPosition.xy);
+  float depthPhase = iPosition.z * 0.24;
+
+  // Radius-dependent rotation creates a curling arm rather than a flat rotating disc.
+  float inwardCurl = 2.35 / (baseRadius + 0.62);
+  float angle = baseAngle
+    + uTime * (0.28 + uMid * 1.5)
+    + inwardCurl * (0.78 + uTurbulence * 0.22)
+    + iPhase * (0.08 + 0.13 * uTurbulence);
+
+  float armWave = sin(baseAngle * 3.0 - uTime * 0.85 + depthPhase);
+  float radius = baseRadius
+    + sin(uTime * 1.35 + iPhase * 3.1 + depthPhase) * (0.10 + uTurbulence * 0.24)
+    + armWave * (0.06 + uMid * 0.16)
+    + uBass * (0.28 + 0.42 * sin(iPhase * 4.0));
+
   vec3 animatedPosition = vec3(cos(angle) * radius, sin(angle) * radius, iPosition.z);
-  animatedPosition.z += sin(uTime * 1.25 + iPhase * 3.2) * (0.25 + uTreble * 0.52);
-  animatedPosition.xy *= 1.0 + uLevel * 0.12 + uBass * 0.10;
+  animatedPosition.z += sin(angle * 1.7 + iPhase * 1.4 + uTime * 0.72)
+    * (0.22 + uTreble * 0.72 + uTurbulence * 0.08);
+  animatedPosition.z += sin(baseRadius * 1.45 - uTime * 1.4 + iPhase) * (0.08 + uMid * 0.14);
+  animatedPosition.xy *= 1.0 + uLevel * 0.12 + uBass * 0.12;
+
   vec4 viewPosition = modelViewMatrix * vec4(animatedPosition, 1.0);
-  float billboardSize = (0.038 + iSize * 0.042 + uTreble * 0.042) * (1.0 + uLevel * 0.35);
+  float billboardSize = (0.034 + iSize * 0.044 + uTreble * 0.046) * (1.0 + uLevel * 0.28);
   viewPosition.xy += position.xy * billboardSize;
   gl_Position = projectionMatrix * viewPosition;
   vUv = uv;
-  float hue = clamp((sin(angle * 1.5 + iPhase) + 1.0) * 0.5, 0.0, 1.0);
-  vColor = mix(uColorA, uColorB, hue);
-  vColor = mix(vColor, uColorC, clamp(uBass * 0.85, 0.0, 0.85));
-  vAlpha = 0.72 + uLevel * 0.34 + uTreble * 0.32;
+
+  float flow = clamp(0.5 + 0.5 * sin(angle * 1.15 + depthPhase * 2.0 + uTime * 0.24), 0.0, 1.0);
+  vColor = mix(uColorA, uColorB, flow);
+  float edgeEnergy = smoothstep(0.3, 4.2, baseRadius);
+  vColor = mix(vColor, uColorC, clamp(edgeEnergy * 0.55 + uTreble * 0.18, 0.0, 0.85));
+  vColor = mix(vColor, uColorC, clamp(uBass * 0.62, 0.0, 0.72));
+  vAlpha = 0.68 + uLevel * 0.32 + uTreble * 0.3;
 }
 `;
 
