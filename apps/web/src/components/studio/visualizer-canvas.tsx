@@ -244,12 +244,10 @@ export function VisualizerCanvas() {
         lastFrameTime = now;
         const frameStarted = performance.now();
         cameraControls?.update();
-        if (activeSceneCamera !== null && cameraControls !== null) {
+        if (activeSceneCamera !== null && cameraControls !== null && cameraRollDegrees !== 0) {
           // Rebuild the base look direction before applying roll so it never accumulates frame-to-frame.
           activeSceneCamera.lookAt(cameraControls.target);
-          if (cameraRollDegrees !== 0) {
-            activeSceneCamera.rotateZ(THREE.MathUtils.degToRad(cameraRollDegrees));
-          }
+          activeSceneCamera.rotateZ(THREE.MathUtils.degToRad(cameraRollDegrees));
         }
         if (activeScene !== null) {
           activeScene.update(readLatestAudioFrame() ?? IDLE_AUDIO_FRAME, DEFAULT_SCENE_PARAMS, dt);
