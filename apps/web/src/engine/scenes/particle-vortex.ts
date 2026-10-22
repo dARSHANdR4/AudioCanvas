@@ -97,6 +97,8 @@ export class ParticleVortexScene implements Scene {
   private particleGeometry: THREE.InstancedBufferGeometry | null = null;
   private particleMaterial: THREE.ShaderMaterial | null = null;
   private particles: THREE.Mesh<THREE.InstancedBufferGeometry, THREE.ShaderMaterial> | null = null;
+  private core: THREE.Mesh<THREE.SphereGeometry, THREE.MeshBasicMaterial> | null = null;
+  private coreRing: THREE.Mesh<THREE.TorusGeometry, THREE.MeshBasicMaterial> | null = null;
   private colors: readonly [string, string, string] = DEFAULT_SCENE_THEME.colors;
   private quality: QualityTier = 'high';
   private elapsed = 0;
@@ -171,7 +173,39 @@ export class ParticleVortexScene implements Scene {
     this.particles = new THREE.Mesh(geometry, material);
     this.particles.frustumCulled = false;
     this.particles.name = 'particle-vortex-100k';
+    this.particles.renderOrder = 1;
     context.scene.add(this.particles);
+
+    this.core = new THREE.Mesh(
+      new THREE.SphereGeometry(0.19, 24, 16),
+      new THREE.MeshBasicMaterial({
+        color: this.colors[1],
+        transparent: true,
+        opacity: 0.94,
+        blending: THREE.AdditiveBlending,
+        depthWrite: false,
+        toneMapped: false,
+      }),
+    );
+    this.core.name = 'vortex-singularity';
+    this.core.renderOrder = 2;
+    context.scene.add(this.core);
+
+    this.coreRing = new THREE.Mesh(
+      new THREE.TorusGeometry(0.56, 0.012, 8, 128),
+      new THREE.MeshBasicMaterial({
+        color: this.colors[0],
+        transparent: true,
+        opacity: 0.76,
+        blending: THREE.AdditiveBlending,
+        depthWrite: false,
+        toneMapped: false,
+      }),
+    );
+    this.coreRing.name = 'vortex-accretion-ring';
+    this.coreRing.rotation.set(0.82, 0.18, 0.3);
+    this.coreRing.renderOrder = 2;
+    context.scene.add(this.coreRing);
     this.setTheme(this.colorsToTheme());
   }
 
@@ -187,6 +221,17 @@ export class ParticleVortexScene implements Scene {
     uniforms.uLevel.value = Math.max(visualEnergy(audioFrame.level, 1.55, 0.78), this.beatGlow * 0.9);
     uniforms.uTurbulence.value = Math.max(0, Math.min(2, params.particleTurbulence ?? 0.5));
     uniforms.uPointSize.value = 1 + Math.max(0, Math.min(2, params.colorFlash ?? 0)) * 0.15;
+    if (this.core !== null) {
+      this.core.scale.setScalar(0.88 + this.beatGlow * 0.62 + uniforms.uBass.value * 0.2);
+      if (this.core.material instanceof THREE.MeshBasicMaterial) {
+        this.core.material.opacity = 0.76 + this.beatGlow * 0.24;
+      }
+    }
+    if (this.coreRing !== null) {
+      this.coreRing.rotation.z += dt * (0.35 + uniforms.uMid.value * 0.8);
+      this.coreRing.rotation.x = 0.82 + Math.sin(this.elapsed * 0.22) * 0.12;
+      this.coreRing.scale.setScalar(1 + this.beatGlow * 0.15 + uniforms.uBass.value * 0.08);
+    }
   }
 
   render(): void {
@@ -202,6 +247,8 @@ export class ParticleVortexScene implements Scene {
       this.particleMaterial.uniforms.uColorB.value.set(this.colors[1]);
       this.particleMaterial.uniforms.uColorC.value.set(this.colors[2]);
     }
+    if (this.core !== null) this.core.material.color.set(this.colors[1]);
+    if (this.coreRing !== null) this.coreRing.material.color.set(this.colors[0]);
   }
 
   setQuality(tier: QualityTier): void {
@@ -214,13 +261,23 @@ export class ParticleVortexScene implements Scene {
   dispose(): void {
     if (this.disposed) return;
     this.disposed = true;
-    if (this.context !== null && this.particles !== null) this.context.scene.remove(this.particles);
+    if (this.context !== null) {
+      if (this.particles !== null) this.context.scene.remove(this.particles);
+      if (this.core !== null) this.context.scene.remove(this.core);
+      if (this.coreRing !== null) this.context.scene.remove(this.coreRing);
+    }
     this.particleGeometry?.dispose();
     this.particleMaterial?.dispose();
+    this.core?.geometry.dispose();
+    this.core?.material.dispose();
+    this.coreRing?.geometry.dispose();
+    this.coreRing?.material.dispose();
     this.context = null;
     this.particleGeometry = null;
     this.particleMaterial = null;
     this.particles = null;
+    this.core = null;
+    this.coreRing = null;
   }
 
   private colorsToTheme(): SceneTheme {
