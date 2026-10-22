@@ -64,6 +64,7 @@ export function VisualizerCanvas() {
     let unsubscribeCameraCommands: (() => void) | null = null;
     let activeSceneCamera: THREE.PerspectiveCamera | null = null;
     let cameraControls: OrbitControls | null = null;
+    let renderStage: THREE.Scene | null = null;
     let cameraRollDegrees = 0;
 
     const handleResize = () => {
@@ -119,11 +120,28 @@ export function VisualizerCanvas() {
           break;
         case 'reset':
           applyCameraPreset('front');
+          renderStage?.rotation.set(0, 0, 0);
+          host.dataset.objectAxisX = '0';
+          host.dataset.objectAxisY = '0';
+          host.dataset.objectAxisZ = '0';
           break;
         case 'roll':
           cameraRollDegrees = THREE.MathUtils.clamp(command.degrees, -180, 180);
           host.dataset.cameraRoll = String(cameraRollDegrees);
           break;
+        case 'axis': {
+          const degrees = THREE.MathUtils.clamp(command.degrees, -180, 180);
+          if (renderStage !== null) {
+            const radians = THREE.MathUtils.degToRad(degrees);
+            if (command.axis === 'x') renderStage.rotation.x = radians;
+            if (command.axis === 'y') renderStage.rotation.y = radians;
+            if (command.axis === 'z') renderStage.rotation.z = radians;
+          }
+          if (command.axis === 'x') host.dataset.objectAxisX = String(degrees);
+          if (command.axis === 'y') host.dataset.objectAxisY = String(degrees);
+          if (command.axis === 'z') host.dataset.objectAxisZ = String(degrees);
+          break;
+        }
         case 'sensitivity': {
           const value = THREE.MathUtils.clamp(command.value, 0.4, 2);
           cameraControls.rotateSpeed = value;
@@ -184,6 +202,10 @@ export function VisualizerCanvas() {
 
       const stage = new THREE.Scene();
       stage.background = new THREE.Color('#0a0a12');
+      renderStage = stage;
+      host.dataset.objectAxisX = '0';
+      host.dataset.objectAxisY = '0';
+      host.dataset.objectAxisZ = '0';
       const camera = new THREE.PerspectiveCamera(46, 1, 0.1, 80);
       camera.position.set(0, 0, 10.3);
       activeSceneCamera = camera;
