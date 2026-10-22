@@ -117,6 +117,7 @@ export class KaleidoscopeMandalaScene implements Scene {
     );
     this.coreCage.renderOrder = 2;
     context.scene.add(this.core, this.coreCage);
+    this.setQuality(this.quality);
   }
 
   update(frame: AudioFrame, params: ParamFrame, dt: number): void {
