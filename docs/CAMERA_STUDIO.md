@@ -14,13 +14,14 @@ Camera Studio gives the user direct control over the viewing perspective for Aud
 - Camera roll: rotate the viewing frame around its forward axis from -180° to 180°.
 - Sensitivity: adjust orbit, pan and zoom speed.
 - Rotate, pan and zoom toggles: temporarily disable individual interactions.
-- Reset view: restore the canonical front camera, zero roll, default sensitivity and enabled navigation inputs.
+- Object X / Y / Z rotation: rotate the scene entity around its three axes independently of the camera viewpoint.
+- Reset view: restore the canonical front camera, zero roll, default sensitivity, enabled navigation inputs and neutral X/Y/Z object rotation.
 
 ## Scope and implementation notes
 
 The Camera Studio UI is positioned over the canvas. A typed command bridge moves UI intent to the renderer without per-frame camera state in React. One managed OrbitControls instance is shared by the seven visual scenes. Scene switching and audio processing are not changed by camera commands.
 
-Camera roll affects the camera's viewing orientation; it does not rotate the underlying visual entity around its own local X/Y/Z axes. Independent object-axis transforms are a later enhancement. Camera settings are currently transient and are not included in Save / Share / Export.
+Camera orbit, pan, zoom and roll affect the viewpoint. Object X/Y/Z sliders independently rotate the shared scene contents, so the view can be changed without changing the object's orientation and vice versa. Camera settings and object-axis values are currently transient and are not included in Save / Share / Export.
 
 ## Verification status
 
