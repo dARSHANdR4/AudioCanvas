@@ -16,7 +16,7 @@ export function SafetyControls({ placement = 'desktop' }: { placement?: 'desktop
   useEffect(() => {
     const unsubscribe = subscribeToSafetySettings(() => setSettings({ ...getSafetySettings() }));
     initializeSafetySettings();
-    setSettings({ ...getSafetySettings() });
+    // initializeSafetySettings notifies this subscriber when it loads persisted/system settings.
     return unsubscribe;
   }, []);
 
