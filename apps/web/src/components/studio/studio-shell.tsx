@@ -61,6 +61,7 @@ export function StudioShell() {
             <div className="stage-corner stage-corner--bottom-right"><span>WEBGL2</span><span className="status-dot" /> <span data-scene-label>RADIAL WAVE DISK</span></div>
           </div>
           <AudioWorkbench />
+          <SafetyControls placement="mobile" />
           <p className="studio-mobile-note">Seven visual styles are available: spectrum, particles, tunnel, waveform, spectrogram, mandala and liquid mesh. The renderer swaps scenes without restarting audio.</p>
         </section>
 
@@ -94,7 +95,7 @@ export function StudioShell() {
             </div>
             <button className="button button--dashed button--full" disabled type="button">＋ Add mapping <span>Available in M3</span></button>
           </section>
-          <SafetyControls />
+          <SafetyControls placement="desktop" />
         </aside>
       </div>
       <footer className="studio-statusbar"><span><span className="status-dot" /> M2 · VISUAL LIBRARY PREVIEW</span><span>60 FPS TARGET</span><span>LOCAL-FIRST BY DESIGN</span><Link href="/legal/photosensitivity">Photosensitivity notice</Link></footer>
