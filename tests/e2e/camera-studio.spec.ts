@@ -32,8 +32,33 @@ test('Camera Studio provides camera presets, roll and a front-view reset', async
   await page.keyboard.press('End');
   await expect(canvas).toHaveAttribute('data-camera-roll', '180');
 
+  const scrollBody = panel.getByTestId('camera-studio-scroll-body');
+  const pageScrollBeforeJump = await page.evaluate(() => window.scrollY);
+  await expect.poll(() => scrollBody.evaluate((element) => element.scrollHeight > element.clientHeight)).toBe(true);
+
   await panel.getByRole('button', { name: 'XYZ axes' }).click();
   const xAxisSlider = panel.getByRole('slider', { name: 'Object X axis' });
+  const zAxisSlider = panel.getByRole('slider', { name: 'Object Z axis' });
+  await expect(xAxisSlider).toBeInViewport();
+  await expect.poll(() => scrollBody.evaluate((element) => element.scrollTop)).toBeGreaterThan(0);
+  // The shortcut must not scroll the page or move the popup outside its own viewport.
+  await expect.poll(() => page.evaluate(() => window.scrollY)).toBe(pageScrollBeforeJump);
+  await expect(panel.getByRole('button', { name: 'Reset view' })).toBeVisible();
+
+  // Verify the popup can scroll all the way down to Z and back up without a tab refresh.
+  await scrollBody.hover();
+  await page.mouse.wheel(0, 1600);
+  await expect.poll(() => scrollBody.evaluate((element) => element.scrollTop)).toBeGreaterThan(0);
+  await expect(zAxisSlider).toBeInViewport();
+  await expect(panel.getByRole('button', { name: 'Reset view' })).toBeVisible();
+
+  await page.mouse.wheel(0, -1800);
+  await expect.poll(() => scrollBody.evaluate((element) => element.scrollTop)).toBe(0);
+  await expect(panel.getByRole('button', { name: 'Front view' })).toBeInViewport();
+  await expect.poll(() => page.evaluate(() => window.scrollY)).toBe(pageScrollBeforeJump);
+
+  // Jumping to the axes should still work after returning to the top.
+  await panel.getByRole('button', { name: 'XYZ axes' }).click();
   await expect(xAxisSlider).toBeInViewport();
   await xAxisSlider.focus();
   await page.keyboard.press('End');
