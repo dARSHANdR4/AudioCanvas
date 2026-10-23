@@ -4,6 +4,7 @@ import { VisualizerCanvas } from './visualizer-canvas';
 import { CameraStudio } from './camera-studio';
 import { AudioWorkbench } from './audio-workbench';
 import { SceneSelector } from './scene-selector';
+import { SafetyControls } from './safety-controls';
 
 export function StudioShell() {
   return (
@@ -60,6 +61,7 @@ export function StudioShell() {
             <div className="stage-corner stage-corner--bottom-right"><span>WEBGL2</span><span className="status-dot" /> <span data-scene-label>RADIAL WAVE DISK</span></div>
           </div>
           <AudioWorkbench />
+          <SafetyControls placement="mobile" />
           <p className="studio-mobile-note">Seven visual styles are available: spectrum, particles, tunnel, waveform, spectrogram, mandala and liquid mesh. The renderer swaps scenes without restarting audio.</p>
         </section>
 
@@ -93,12 +95,7 @@ export function StudioShell() {
             </div>
             <button className="button button--dashed button--full" disabled type="button">＋ Add mapping <span>Available in M3</span></button>
           </section>
-          <section className="inspector-section inspector-section--lower">
-            <div className="inspector-title-row"><h2>Safety</h2><span className="safety-on">DEFAULTS ON</span></div>
-            <div className="safety-row"><span><span className="safety-icon">✳</span> Flash limiter</span><span className="toggle-static" aria-label="Flash limiter enabled by default"><span /></span></div>
-            <div className="safety-row"><span><span className="safety-icon">◐</span> Reduced motion</span><span className="toggle-static toggle-static--off" aria-label="Reduced motion setting available in M3"><span /></span></div>
-            <p className="fine-print">Flash limiting and motion preferences will control the renderer when it ships.</p>
-          </section>
+          <SafetyControls placement="desktop" />
         </aside>
       </div>
       <footer className="studio-statusbar"><span><span className="status-dot" /> M2 · VISUAL LIBRARY PREVIEW</span><span>60 FPS TARGET</span><span>LOCAL-FIRST BY DESIGN</span><Link href="/legal/photosensitivity">Photosensitivity notice</Link></footer>

@@ -304,7 +304,21 @@ button:disabled { cursor: not-allowed; opacity: 0.58; }
 .inspector-section--lower { padding-top: 18px; }
 .inspector-title-row h2 { margin: 0; font-size: 12px; }
 .safety-on { color: var(--success); font-family: var(--font-mono); font-size: 8px; letter-spacing: .3px; }
-.safety-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 13px 0; border-bottom: 1px solid rgba(160,160,192,.09); color: #b8b8d0; font-size: 10px; }
+.safety-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 13px 0; border-bottom: 1px solid rgba(160,160,192,.09); color: #b8b8d0; font-size: 10px; cursor: pointer; }
+.safety-row__copy { display: flex; flex-direction: column; gap: 5px; min-width: 0; }
+.safety-row__copy strong { color: #d4d4e8; font-size: 10px; font-weight: 550; }
+.safety-row__copy small { max-width: 190px; color: #8585a2; font-size: 9px; line-height: 1.55; }
+.safety-switch { appearance: none; position: relative; flex: 0 0 auto; width: 31px; height: 18px; margin: 0; border: 1px solid #47475f; border-radius: 999px; background: #303047; cursor: pointer; transition: background .16s ease, border-color .16s ease; }
+.safety-switch::after { position: absolute; top: 2px; left: 2px; width: 12px; height: 12px; content: ""; border-radius: 50%; background: #8585a0; transition: transform .16s ease, background .16s ease; }
+.safety-switch:checked { border-color: rgba(0,245,255,.72); background: rgba(0,245,255,.28); }
+.safety-switch:checked::after { transform: translateX(13px); background: var(--cyan); }
+.safety-switch:focus-visible { outline: 2px solid var(--cyan); outline-offset: 3px; }
+@media (prefers-reduced-motion: reduce) { .safety-switch, .safety-switch::after { transition: none; } }
+@media (min-width: 981px) { .safety-controls--mobile { display: none; } }
+@media (max-width: 980px) {
+  .safety-controls--desktop { display: none; }
+  .safety-controls--mobile { display: block; margin-top: 16px; border: 1px solid var(--border); border-radius: 8px; background: rgba(16,16,27,.76); }
+}
 .safety-icon { display: inline-block; margin-right: 6px; color: var(--cyan); font-size: 13px; vertical-align: -1px; }
 .toggle-static { width: 27px; height: 15px; display: flex; align-items: center; padding: 2px; border-radius: 99px; background: rgba(0,245,255,.32); }
 .toggle-static span { width: 11px; height: 11px; border-radius: 50%; margin-left: auto; background: var(--cyan); }

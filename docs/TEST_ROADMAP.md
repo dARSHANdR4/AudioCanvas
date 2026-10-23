@@ -30,6 +30,8 @@
 | TC-12 | Flash limiter on with a strobe-heavy track | No more than 3 full-screen flashes per second |
 | TC-13 | Delete account | All user presets and sessions removed |
 | TC-14 | Camera Studio scroll & jump | Jump to XYZ stays inside the popup; scrolling reaches the end and returns to the top; fixed Reset remains reachable; page scroll position is unchanged |
+| TC-15 | Safety controls | Flash limiter and Reduced Motion change renderer state, affect the processed audio frame, and persist after reload |
+| TC-16 | Hidden-tab rendering | When the document is hidden, scene updates and GPU rendering are skipped; rendering resumes when visible without a large catch-up time step |
 
 ## 6.3 Roadmap (Milestones)
 
@@ -51,7 +53,7 @@
 | R1 | WebCodecs/AAC unsupported in some browsers | Medium | High | Feature detection; Opus/WebM fallback; MediaRecorder fallback labeled non-deterministic |
 | R2 | Export memory exhaustion on long tracks | Medium | High | Streaming muxer, File System Access API, size warnings, segment export |
 | R3 | Low FPS on weak GPUs | High | Medium | Adaptive quality, quality presets, particle-count scaling |
-| R4 | Photosensitive seizure risk | Low | Severe | Flash limiter default on, warning, strobe caps, reduced-motion mode |
+| R4 | Photosensitive seizure risk | Low | Severe | Keep Flash Limiter on by default; rate-limit sharp audio-driven energy/beat changes; honour Reduced Motion; test real output and provide clear non-guarantee wording |
 | R5 | Live/export visual mismatch | Medium | Medium | Shared pure analysis module, seeded PRNG, golden-frame tests |
 | R6 | Copyright claims on user content/gallery | Medium | Medium | Audio never uploaded; presets contain no audio; ToS and report flow |
 | R7 | Mobile Safari audio quirks | Medium | Medium | Gesture-gated AudioContext resume; device test matrix |
@@ -63,6 +65,10 @@
 Code reviewed and merged; unit and e2e tests green; no new accessibility violations; performance budget respected; documentation updated; feature behind a flag if incomplete; analytics events added where specified.
 
 **Required feature smoke-test habit:** before merging every user-facing feature, add or update a feature-specific automated smoke test that exercises the main interaction path—not only rendering/builds. For UI changes, test open/use/close or reset flows, keyboard/focus where relevant, scroll both directions for scrollable panels, and verify the page/workspace does not unexpectedly scroll or trap controls. After CI passes, open the Vercel preview and perform a short manual smoke test at desktop size and at least one narrow viewport. Record the result in the PR; don't describe the feature as verified if only static HTML/build checks ran. Performance claims still require separate reference-device measurement.
+
+
+
+**Safety control implementation note:** Flash Limiter currently rate-limits beat accents and abrupt audio-driven energy/spectrum changes, and attenuates waveform amplitude. Reduced Motion slows the render-time step and smooths the incoming audio data. These are risk-reduction controls, not a guarantee that every possible scene or user-supplied track meets every photosensitivity standard. Real visual verification remains required.
 
 ## 6.6 Post-MVP Backlog
 
