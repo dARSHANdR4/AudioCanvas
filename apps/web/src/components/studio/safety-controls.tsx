@@ -9,8 +9,9 @@ import {
   type SafetySettings,
 } from '@/engine/scenes/safety-settings-store';
 
-export function SafetyControls() {
+export function SafetyControls({ placement = 'desktop' }: { placement?: 'desktop' | 'mobile' }) {
   const [settings, setSettings] = useState<SafetySettings>(() => getSafetySettings());
+  const titleId = placement === 'mobile' ? 'safety-controls-title-mobile' : 'safety-controls-title-desktop';
 
   useEffect(() => {
     const unsubscribe = subscribeToSafetySettings(() => setSettings({ ...getSafetySettings() }));
@@ -20,9 +21,9 @@ export function SafetyControls() {
   }, []);
 
   return (
-    <section className="inspector-section inspector-section--lower" aria-labelledby="safety-controls-title">
+    <section className={`inspector-section inspector-section--lower safety-controls safety-controls--${placement}`} aria-labelledby={titleId}>
       <div className="inspector-title-row">
-        <h2 id="safety-controls-title">Safety controls</h2>
+        <h2 id={titleId}>Safety controls</h2>
         <span className="safety-on">LIVE</span>
       </div>
 
