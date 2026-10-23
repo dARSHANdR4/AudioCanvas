@@ -272,8 +272,8 @@ export function VisualizerCanvas() {
         const dt = Math.min(0.05, Math.max(0, (now - lastFrameTime) / 1000));
         lastFrameTime = now;
         if (document.hidden) {
-          // Skip scene updates and GPU rendering while the browser tab is hidden.
-          animationFrame = window.requestAnimationFrame(renderLoop);
+          // Stop the frame loop entirely while hidden; visibilitychange restarts it.
+          animationFrame = 0;
           return;
         }
         const frameStarted = performance.now();
@@ -305,8 +305,8 @@ export function VisualizerCanvas() {
 
       handleVisibilityChange = () => {
         lastFrameTime = performance.now();
-        if (!document.hidden && renderer !== null) {
-          window.cancelAnimationFrame(animationFrame);
+        if (!document.hidden && renderer !== null && animationFrame === 0) {
+          lastFrameTime = performance.now();
           animationFrame = window.requestAnimationFrame(renderLoop);
         }
       };
