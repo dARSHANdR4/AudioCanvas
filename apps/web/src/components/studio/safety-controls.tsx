@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useSyncExternalStore } from 'react';
 import {
   getSafetySettings,
   initializeSafetySettings,
@@ -9,16 +9,24 @@ import {
   type SafetySettings,
 } from '@/engine/scenes/safety-settings-store';
 
-export function SafetyControls({ placement = 'desktop' }: { placement?: 'desktop' | 'mobile' }) {
-  const [settings, setSettings] = useState<SafetySettings>(() => getSafetySettings());
-  const titleId = placement === 'mobile' ? 'safety-controls-title-mobile' : 'safety-controls-title-desktop';
+const SERVER_DEFAULT_SETTINGS: SafetySettings = Object.freeze({
+  flashLimiter: true,
+  reducedMotion: false,
+});
 
-  useEffect(() => {
-    const unsubscribe = subscribeToSafetySettings(() => setSettings({ ...getSafetySettings() }));
-    initializeSafetySettings();
-    // initializeSafetySettings notifies this subscriber when it loads persisted/system settings.
-    return unsubscribe;
-  }, []);
+function subscribe(listener: () => void): () => void {
+  const unsubscribe = subscribeToSafetySettings(() => listener());
+  initializeSafetySettings();
+  return unsubscribe;
+}
+
+function getServerSnapshot(): SafetySettings {
+  return SERVER_DEFAULT_SETTINGS;
+}
+
+export function SafetyControls({ placement = 'desktop' }: { placement?: 'desktop' | 'mobile' }) {
+  const settings = useSyncExternalStore(subscribe, getSafetySettings, getServerSnapshot);
+  const titleId = placement === 'mobile' ? 'safety-controls-title-mobile' : 'safety-controls-title-desktop';
 
   return (
     <section className={`inspector-section inspector-section--lower safety-controls safety-controls--${placement}`} aria-labelledby={titleId}>
