@@ -1,4 +1,6 @@
-import { expect, test, type Page } from '@playwright/test';
+import { mkdir, writeFile } from 'node:fs/promises';
+import { resolve } from 'node:path';
+import { expect, test, type Page, type TestInfo } from '@playwright/test';
 
 const scenes = [
   { id: 'radial-wave-disk', name: 'Radial Wave Disk' },
@@ -130,6 +132,18 @@ async function readRendererSnapshot(
   };
 }
 
+
+async function saveJsonReport(testInfo: TestInfo, filename: string, report: unknown): Promise<void> {
+  const serialized = JSON.stringify(report, null, 2);
+  const reportDirectory = resolve(process.cwd(), 'test-results/performance');
+  await mkdir(reportDirectory, { recursive: true });
+  await writeFile(resolve(reportDirectory, filename), serialized, 'utf8');
+  await testInfo.attach(filename, {
+    body: Buffer.from(serialized),
+    contentType: 'application/json',
+  });
+}
+
 function median(values: number[]): number {
   if (values.length === 0) return 0;
   const sorted = [...values].sort((a, b) => a - b);
@@ -183,10 +197,7 @@ test('@quick-performance profiles FPS and long frames across all seven scenes', 
 
   // Attach all scene measurements before applying gates so a failing FPS test still leaves a complete report.
   console.info('[AudioCanvas scene performance] ' + JSON.stringify(report));
-  await testInfo.attach('scene-fps-report.json', {
-    body: Buffer.from(JSON.stringify(report, null, 2)),
-    contentType: 'application/json',
-  });
+  await saveJsonReport(testInfo, 'scene-fps-report.json', report);
 
   for (const scene of report.scenes) {
     expect(scene.frameCount, scene.name + ' should keep scheduling animation frames').toBeGreaterThan(3);
@@ -223,10 +234,7 @@ test('@quick-performance retains audio continuity through 20 scene switches', as
   expect(endTime, 'audio timeline should continue advancing during repeated scene swaps').toBeGreaterThan(startTime);
   const report = { switches: visited.length, visitedScenes: visited, startTimeSeconds: startTime, endTimeSeconds: endTime };
   console.info('[AudioCanvas scene-switch performance] ' + JSON.stringify(report));
-  await testInfo.attach('scene-switch-report.json', {
-    body: Buffer.from(JSON.stringify(report, null, 2)),
-    contentType: 'application/json',
-  });
+  await saveJsonReport(testInfo, 'scene-switch-report.json', report);
 });
 
 test('@quick-performance verifies adaptive startup quality tiers', async ({ browser }, testInfo) => {
@@ -266,10 +274,7 @@ test('@quick-performance verifies adaptive startup quality tiers', async ({ brow
   }
 
   console.info('[AudioCanvas quality-tier performance] ' + JSON.stringify(results));
-  await testInfo.attach('quality-tier-report.json', {
-    body: Buffer.from(JSON.stringify(results, null, 2)),
-    contentType: 'application/json',
-  });
+  await saveJsonReport(testInfo, 'quality-tier-report.json', results);
 });
 
 test('@performance-soak runs an extended memory/resource stability session', async ({ browser }, testInfo) => {
@@ -370,10 +375,7 @@ test('@performance-soak runs an extended memory/resource stability session', asy
   };
 
   console.info('[AudioCanvas memory/resource soak report] ' + JSON.stringify(report));
-  await testInfo.attach('memory-resource-soak-report.json', {
-    body: Buffer.from(JSON.stringify(report, null, 2)),
-    contentType: 'application/json',
-  });
+  await saveJsonReport(testInfo, 'memory-resource-soak-report.json', report);
 
   expect(samples.length).toBeGreaterThanOrEqual(Math.max(3, Math.floor(soakMinutes / 2)));
   expect(heapValues.length, 'Chromium should expose JSHeapUsedSize through CDP').toBeGreaterThan(0);
