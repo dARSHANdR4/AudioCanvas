@@ -236,7 +236,7 @@ test('@quick-performance verifies adaptive startup quality tiers', async ({ brow
   const results: Array<{ reportedCores: number | null; expected: string; observed: string | null }> = [];
 
   for (const item of cases) {
-    const context = await browser.newContext();
+    const context = await browser.newContext({ baseURL: process.env.PLAYWRIGHT_BASE_URL ?? 'http://127.0.0.1:3100' });
     await context.addInitScript((cores: number) => {
       try {
         localStorage.setItem('audiocanvas.photosensitivity-acknowledged.v1', 'true');
@@ -274,7 +274,7 @@ test('@performance-soak runs an extended memory/resource stability session', asy
   const soakMinutes = Number(process.env.PERFORMANCE_SOAK_MINUTES ?? '30');
   test.setTimeout((soakMinutes + 8) * 60_000);
 
-  const context = await browser.newContext({ viewport: { width: 1440, height: 900 } });
+  const context = await browser.newContext({ baseURL: process.env.PLAYWRIGHT_BASE_URL ?? 'http://127.0.0.1:3100', viewport: { width: 1440, height: 900 } });
   const page = await context.newPage();
   const pageErrors: string[] = [];
   page.on('pageerror', (error) => pageErrors.push(error.message));
