@@ -101,12 +101,12 @@ function parseClock(value: string | null): number {
 
 async function readRendererSnapshot(
   page: Page,
-  cdp?: { send: (method: string, params?: Record<string, unknown>) => Promise<unknown> },
+  cdp?: { send: (method: 'Performance.getMetrics') => Promise<{ metrics?: Array<{ name: string; value: number }> }> },
 ): Promise<RendererSnapshot> {
   let jsHeapUsedBytes: number | null = null;
   let domNodes: number | null = null;
   if (cdp !== undefined) {
-    const response = await cdp.send('Performance.getMetrics') as { metrics?: Array<{ name: string; value: number }> };
+    const response = await cdp.send('Performance.getMetrics');
     const metrics = new Map((response.metrics ?? []).map((metric) => [metric.name, metric.value]));
     jsHeapUsedBytes = metrics.get('JSHeapUsedSize') ?? null;
     domNodes = metrics.get('Nodes') ?? null;
