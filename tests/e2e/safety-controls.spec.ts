@@ -40,4 +40,17 @@ test('Safety controls affect rendering, retain preferences, and remain interacti
   await expect(page.locator('.visualizer-canvas')).toHaveAttribute('data-safety-flash-limiter', 'true');
   await expect(page.locator('.visualizer-canvas')).toHaveAttribute('data-safety-reduced-motion', 'true');
   await expect(page.getByRole('switch', { name: 'Reduced motion' })).toBeChecked();
+
+  // Simulate the browser page-visibility signal to verify the renderer pauses and resumes.
+  await page.evaluate(() => {
+    Object.defineProperty(document, 'hidden', { configurable: true, get: () => true });
+    document.dispatchEvent(new Event('visibilitychange'));
+  });
+  await expect(page.locator('.visualizer-canvas')).toHaveAttribute('data-render-paused', 'true');
+
+  await page.evaluate(() => {
+    Object.defineProperty(document, 'hidden', { configurable: true, get: () => false });
+    document.dispatchEvent(new Event('visibilitychange'));
+  });
+  await expect(page.locator('.visualizer-canvas')).toHaveAttribute('data-render-paused', 'false');
 });
