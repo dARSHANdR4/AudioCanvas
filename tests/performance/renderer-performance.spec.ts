@@ -101,16 +101,13 @@ function parseClock(value: string | null): number {
 
 async function readRendererSnapshot(
   page: Page,
-  cdp?: { send: (method: 'Performance.getMetrics') => Promise<{ metrics?: Array<{ name: string; value: number }> }> },
+  browserMetrics: { jsHeapUsedBytes: number | null; domNodes: number | null } = {
+    jsHeapUsedBytes: null,
+    domNodes: null,
+  },
 ): Promise<RendererSnapshot> {
-  let jsHeapUsedBytes: number | null = null;
-  let domNodes: number | null = null;
-  if (cdp !== undefined) {
-    const response = await cdp.send('Performance.getMetrics');
-    const metrics = new Map((response.metrics ?? []).map((metric) => [metric.name, metric.value]));
-    jsHeapUsedBytes = metrics.get('JSHeapUsedSize') ?? null;
-    domNodes = metrics.get('Nodes') ?? null;
-  }
+  const jsHeapUsedBytes = browserMetrics.jsHeapUsedBytes;
+  const domNodes = browserMetrics.domNodes;
 
   const data = await page.locator('.visualizer-canvas').evaluate((element) => ({
     scene: element.getAttribute('data-scene') ?? '',
@@ -294,7 +291,12 @@ test('@performance-soak runs an extended memory/resource stability session', asy
   let sceneIndex = 0;
 
   const takeSample = async () => {
-    const sample = await readRendererSnapshot(page, cdp);
+    const response = await cdp.send('Performance.getMetrics') as { metrics?: Array<{ name: string; value: number }> };
+    const metricMap = new Map((response.metrics ?? []).map((metric) => [metric.name, metric.value] as const));
+    const sample = await readRendererSnapshot(page, {
+      jsHeapUsedBytes: metricMap.get('JSHeapUsedSize') ?? null,
+      domNodes: metricMap.get('Nodes') ?? null,
+    });
     samples.push({ ...sample, elapsedSeconds: Math.round((Date.now() - startedAt) / 1000) });
   };
 
@@ -322,7 +324,12 @@ test('@performance-soak runs an extended memory/resource stability session', asy
   await page.getByRole('button', { name: 'Switch to ' + radial.name }).click();
   await expect(page.locator('.visualizer-canvas')).toHaveAttribute('data-scene', radial.id);
   await page.waitForTimeout(2_000);
-  const finalSnapshot = await readRendererSnapshot(page, cdp);
+  const finalCdpResponse = await cdp.send('Performance.getMetrics') as { metrics?: Array<{ name: string; value: number }> };
+  const finalMetricMap = new Map((finalCdpResponse.metrics ?? []).map((metric) => [metric.name, metric.value] as const));
+  const finalSnapshot = await readRendererSnapshot(page, {
+    jsHeapUsedBytes: finalMetricMap.get('JSHeapUsedSize') ?? null,
+    domNodes: finalMetricMap.get('Nodes') ?? null,
+  });
   const heapValues = samples.map((sample) => sample.jsHeapUsedBytes).filter((value): value is number => value !== null);
   const nodeValues = samples.map((sample) => sample.domNodes).filter((value): value is number => value !== null);
   const startHeap = median(heapValues.slice(0, Math.min(4, heapValues.length)));
