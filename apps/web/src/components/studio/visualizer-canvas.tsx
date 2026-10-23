@@ -66,6 +66,7 @@ export function VisualizerCanvas() {
     let quality: QualityTier = 'medium';
     let slowFrameSeconds = 0;
     let lastFrameTime = performance.now();
+    let lastDiagnosticsAt = 0;
     let listenerAdded = false;
     let unsubscribeSceneSelection: (() => void) | null = null;
     let unsubscribeCameraCommands: (() => void) | null = null;
@@ -216,6 +217,7 @@ export function VisualizerCanvas() {
       // Avoid starting a 100k-particle shader on small-core/low-power devices. High quality
       // remains available on stronger devices, and the existing frame-time monitor can degrade it.
       quality = initialQualityForConcurrency(window.navigator.hardwareConcurrency);
+      host.dataset.initialQuality = quality;
       host.dataset.quality = quality;
       renderer = new THREE.WebGLRenderer({
         alpha: true,
@@ -293,6 +295,15 @@ export function VisualizerCanvas() {
         }
 
         const frameCost = performance.now() - frameStarted;
+        const diagnosticsNow = performance.now();
+        // Publish low-frequency diagnostics for automated checks; these are not GPU-VRAM measurements.
+        if (diagnosticsNow - lastDiagnosticsAt >= 1000) {
+          lastDiagnosticsAt = diagnosticsNow;
+          host.dataset.frameCostMs = frameCost.toFixed(2);
+          host.dataset.rendererGeometries = String(renderer.info.memory.geometries);
+          host.dataset.rendererTextures = String(renderer.info.memory.textures);
+          host.dataset.rendererCalls = String(renderer.info.render.calls);
+        }
         if (frameCost > 20) slowFrameSeconds += dt;
         else slowFrameSeconds = Math.max(0, slowFrameSeconds - dt * 0.5);
         if (slowFrameSeconds >= 2 && quality !== 'low') {

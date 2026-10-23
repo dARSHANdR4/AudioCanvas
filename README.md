@@ -160,6 +160,7 @@ The <code>docs/</code> directory is the reference for scope and design:
 - [System Architecture](docs/ARCHITECTURE.md)
 - [Engineering Decisions](docs/DECISIONS.md)
 - [Test Roadmap](docs/TEST_ROADMAP.md)
+- [Performance Testing Guide](docs/PERFORMANCE_TESTING.md)
 - [Backend Plan](docs/BACKEND.md)
 
 ## 🟩 BUILD PRINCIPLES
