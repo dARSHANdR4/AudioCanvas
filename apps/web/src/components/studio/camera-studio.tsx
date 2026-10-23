@@ -80,13 +80,13 @@ export function CameraStudio() {
     };
     window.addEventListener('keydown', handleKeyDown);
     window.addEventListener('resize', positionPanel);
-    // Capture scroll so the panel stays anchored if the page or a workspace pane scrolls.
-    window.addEventListener('scroll', positionPanel, true);
+    // Re-anchor only when the document itself scrolls, not during the popup's own scrolling.
+    window.addEventListener('scroll', positionPanel);
     return () => {
       window.cancelAnimationFrame(frame);
       window.removeEventListener('keydown', handleKeyDown);
       window.removeEventListener('resize', positionPanel);
-      window.removeEventListener('scroll', positionPanel, true);
+      window.removeEventListener('scroll', positionPanel);
     };
   }, [open]);
 
