@@ -16,10 +16,12 @@ const DEFAULT_SETTINGS: SafetySettings = {
 
 let settings: SafetySettings = { ...DEFAULT_SETTINGS };
 let initialized = false;
-const listeners = new Set<() => void>();
+type SafetySettingsListener = (nextSettings: SafetySettings) => void;
+
+const listeners = new Set<SafetySettingsListener>();
 
 function notify(): void {
-  listeners.forEach((listener) => listener());
+  listeners.forEach((listener) => listener(settings));
 }
 
 function systemPrefersReducedMotion(): boolean {
@@ -84,7 +86,7 @@ export function setSafetySetting<K extends SafetySettingKey>(
   notify();
 }
 
-export function subscribeToSafetySettings(listener: () => void): () => void {
+export function subscribeToSafetySettings(listener: SafetySettingsListener): () => void {
   listeners.add(listener);
   return () => listeners.delete(listener);
 }
