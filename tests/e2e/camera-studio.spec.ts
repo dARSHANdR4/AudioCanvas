@@ -21,6 +21,7 @@ test('Camera Studio provides camera presets, roll and a front-view reset', async
 
   const panel = page.getByRole('dialog', { name: 'Camera Studio controls' });
   await expect(panel).toBeVisible();
+  await expect(panel.getByRole('button', { name: 'Reset view' })).toBeVisible();
 
   const initialScene = await canvas.getAttribute('data-scene');
   await panel.getByRole('button', { name: 'Side view' }).click();
@@ -31,7 +32,9 @@ test('Camera Studio provides camera presets, roll and a front-view reset', async
   await page.keyboard.press('End');
   await expect(canvas).toHaveAttribute('data-camera-roll', '180');
 
+  await panel.getByRole('button', { name: 'XYZ axes' }).click();
   const xAxisSlider = panel.getByRole('slider', { name: 'Object X axis' });
+  await expect(xAxisSlider).toBeInViewport();
   await xAxisSlider.focus();
   await page.keyboard.press('End');
   await expect(canvas).toHaveAttribute('data-object-axis-x', '180');
