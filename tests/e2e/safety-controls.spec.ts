@@ -4,10 +4,13 @@ test('Safety controls affect rendering, retain preferences, and remain interacti
   await page.addInitScript(() => {
     try {
       window.localStorage.setItem('audiocanvas.photosensitivity-acknowledged.v1', 'true');
-      window.localStorage.setItem(
-        'audiocanvas.safety-settings.v1',
-        JSON.stringify({ flashLimiter: true, reducedMotion: false }),
-      );
+      // Seed defaults only on first visit; reload must preserve changes made by the test.
+      if (window.localStorage.getItem('audiocanvas.safety-settings.v1') === null) {
+        window.localStorage.setItem(
+          'audiocanvas.safety-settings.v1',
+          JSON.stringify({ flashLimiter: true, reducedMotion: false }),
+        );
+      }
     } catch {
       // The pre-navigation about:blank document can have an opaque origin.
     }
