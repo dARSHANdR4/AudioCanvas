@@ -43,6 +43,7 @@ export class SafetyFrameProcessor {
 
     const safeDt = Math.max(0, Math.min(Number.isFinite(dt) ? dt : 0, 0.1));
     this.elapsed += safeDt;
+    this.ensureBufferLengths(source);
     if (!this.wasActive) {
       this.output.bass = 0;
       this.output.mid = 0;
@@ -97,6 +98,18 @@ export class SafetyFrameProcessor {
     }
 
     return this.output;
+  }
+
+  private ensureBufferLengths(source: AudioFrame): void {
+    // FFT size is user-configurable. Reallocate only when that setting changes—not per frame.
+    if (this.output.spectrum.length !== source.spectrum.length) {
+      this.output.spectrum = new Uint8Array(source.spectrum.length);
+      this.wasActive = false;
+    }
+    if (this.output.waveform.length !== source.waveform.length) {
+      this.output.waveform = new Float32Array(source.waveform.length);
+      this.wasActive = false;
+    }
   }
 
   private filterBand(
