@@ -21,9 +21,12 @@ export class LiquidOrbScene implements Scene {
   private geometry: THREE.IcosahedronGeometry | null = null;
   private initialPositions: Float32Array<ArrayBuffer> | null = null;
   private colorsBuffer: Float32Array<ArrayBuffer> | null = null;
+  private orbFill: THREE.Mesh<THREE.IcosahedronGeometry, THREE.MeshBasicMaterial> | null = null;
   private orb: THREE.Mesh<THREE.IcosahedronGeometry, THREE.MeshBasicMaterial> | null = null;
   private particles: THREE.Points<THREE.IcosahedronGeometry, THREE.PointsMaterial> | null = null;
   private innerCore: THREE.Mesh | null = null;
+  private orbitRings: THREE.Mesh<THREE.TorusGeometry, THREE.MeshBasicMaterial>[] = [];
+  private fillMaterial: THREE.MeshBasicMaterial | null = null;
   private material: THREE.MeshBasicMaterial | null = null;
   private pointMaterial: THREE.PointsMaterial | null = null;
   private colors: readonly [string, string, string] = DEFAULT_SCENE_THEME.colors;
@@ -69,11 +72,20 @@ export class LiquidOrbScene implements Scene {
     geometry.setAttribute('color', new THREE.BufferAttribute(this.colorsBuffer, 3).setUsage(THREE.DynamicDrawUsage));
     this.geometry = geometry;
 
+    this.fillMaterial = new THREE.MeshBasicMaterial({
+      vertexColors: true,
+      side: THREE.DoubleSide,
+      transparent: true,
+      opacity: 0.16,
+      blending: THREE.AdditiveBlending,
+      depthWrite: false,
+      toneMapped: false,
+    });
     this.material = new THREE.MeshBasicMaterial({
       vertexColors: true,
       wireframe: true,
       transparent: true,
-      opacity: 0.88,
+      opacity: 0.96,
       blending: THREE.AdditiveBlending,
       depthWrite: false,
       toneMapped: false,
@@ -88,17 +100,43 @@ export class LiquidOrbScene implements Scene {
       sizeAttenuation: true,
       toneMapped: false,
     });
+    this.orbFill = new THREE.Mesh(geometry, this.fillMaterial);
     this.orb = new THREE.Mesh(geometry, this.material);
     this.particles = new THREE.Points(geometry, this.pointMaterial);
+    this.orbFill.frustumCulled = false;
     this.orb.frustumCulled = false;
     this.particles.frustumCulled = false;
-    context.scene.add(this.orb, this.particles);
+    this.orbFill.renderOrder = 0;
+    this.orb.renderOrder = 1;
+    this.particles.renderOrder = 2;
+    context.scene.add(this.orbFill, this.orb, this.particles);
+
+    for (let index = 0; index < 3; index += 1) {
+      const ringMaterial = new THREE.MeshBasicMaterial({
+        color: index === 1 ? this.colors[2] : this.colors[0],
+        transparent: true,
+        opacity: index === 1 ? 0.2 : 0.12,
+        blending: THREE.AdditiveBlending,
+        depthWrite: false,
+        toneMapped: false,
+      });
+      const ring = new THREE.Mesh(
+        new THREE.TorusGeometry(2.02 + index * 0.19, index === 1 ? 0.012 : 0.008, 6, 144),
+        ringMaterial,
+      );
+      ring.rotation.set(0.55 + index * 0.51, 0.2 + index * 0.63, index * 0.38);
+      ring.renderOrder = 3;
+      ring.frustumCulled = false;
+      this.orbitRings.push(ring);
+      context.scene.add(ring);
+    }
 
     this.innerCore = new THREE.Mesh(
       new THREE.SphereGeometry(0.55, 32, 20),
-      new THREE.MeshBasicMaterial({ color: this.colors[1], transparent: true, opacity: 0.22, blending: THREE.AdditiveBlending, toneMapped: false }),
+      new THREE.MeshBasicMaterial({ color: this.colors[1], transparent: true, opacity: 0.3, blending: THREE.AdditiveBlending, toneMapped: false }),
     );
     context.scene.add(this.innerCore);
+    this.setQuality(this.quality);
   }
 
   update(frame: AudioFrame, params: ParamFrame, dt: number): void {
@@ -132,9 +170,16 @@ export class LiquidOrbScene implements Scene {
     position.needsUpdate = true;
     this.geometry.computeVertexNormals();
     this.orb!.rotation.y += dt * (0.18 + frame.mid * 0.7);
+    this.orb!.rotation.x = Math.sin(this.elapsed * 0.23) * (0.11 + frame.treble * 0.12);
     this.orb!.rotation.z = Math.sin(this.elapsed * 0.35) * 0.09;
+    this.orbFill!.rotation.copy(this.orb!.rotation);
     this.particles!.rotation.copy(this.orb!.rotation);
-    this.innerCore?.scale.setScalar(1 + frame.bass * 0.45 + frame.level * 0.35);
+    this.orbitRings.forEach((ring, index) => {
+      ring.rotation.x += dt * (index % 2 === 0 ? 0.045 : -0.035);
+      ring.rotation.z += dt * (index === 1 ? -0.07 : 0.045);
+      ring.scale.setScalar(1 + bass * (0.035 + index * 0.012) + frame.level * 0.018);
+    });
+    this.innerCore?.scale.setScalar(1 + bass * 0.6 + frame.level * 0.4);
   }
 
   render(): void {
@@ -144,6 +189,9 @@ export class LiquidOrbScene implements Scene {
   setTheme(theme: SceneTheme): void {
     this.colors = theme.colors;
     if (this.pointMaterial !== null) this.pointMaterial.color.set(this.colors[2]);
+    this.orbitRings.forEach((ring, index) => {
+      ring.material.color.set(index === 1 ? this.colors[2] : this.colors[0]);
+    });
     if (this.innerCore?.material instanceof THREE.MeshBasicMaterial) this.innerCore.material.color.set(this.colors[1]);
     if (this.geometry !== null && this.initialPositions !== null) {
       const start = new THREE.Color(this.colors[0]);
@@ -166,19 +214,30 @@ export class LiquidOrbScene implements Scene {
   setQuality(tier: QualityTier): void {
     this.quality = tier;
     if (this.particles !== null) this.particles.visible = tier !== 'low';
+    this.orbitRings.forEach((ring, index) => {
+      ring.visible = tier !== 'low' || index === 1;
+    });
   }
 
   dispose(): void {
     if (this.disposed) return;
     this.disposed = true;
     if (this.context !== null) {
+      if (this.orbFill !== null) this.context.scene.remove(this.orbFill);
       if (this.orb !== null) this.context.scene.remove(this.orb);
       if (this.particles !== null) this.context.scene.remove(this.particles);
       if (this.innerCore !== null) this.context.scene.remove(this.innerCore);
+      this.orbitRings.forEach((ring) => this.context?.scene.remove(ring));
     }
     this.geometry?.dispose();
+    this.fillMaterial?.dispose();
     this.material?.dispose();
     this.pointMaterial?.dispose();
+    this.orbitRings.forEach((ring) => {
+      ring.geometry.dispose();
+      ring.material.dispose();
+    });
+    this.orbitRings = [];
     if (this.innerCore !== null) {
       this.innerCore.geometry.dispose();
       if (this.innerCore.material instanceof THREE.Material) this.innerCore.material.dispose();
@@ -187,9 +246,11 @@ export class LiquidOrbScene implements Scene {
     this.geometry = null;
     this.initialPositions = null;
     this.colorsBuffer = null;
+    this.orbFill = null;
     this.orb = null;
     this.particles = null;
     this.innerCore = null;
+    this.fillMaterial = null;
     this.material = null;
     this.pointMaterial = null;
   }

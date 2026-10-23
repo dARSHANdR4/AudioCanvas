@@ -28,19 +28,40 @@ varying vec3 vColor;
 varying float vGlow;
 void main() {
   vec3 animated = position;
-  // Scroll rings toward the camera so the tunnel clearly travels during playback.
+  // Scroll and twist the tunnel so it reads as a moving 3D passage, not a static wire cage.
   float travel = mod(uTime * (2.0 + uBass * 7.5), 28.0);
   animated.z = mod(position.z + 25.0 + travel, 28.0) - 25.0;
-  float ripple = sin(uTime * 1.8 + position.z * 0.42);
+
+  float angle = atan(position.y, position.x);
+  float radius = length(position.xy);
+  float twist = sin(uTime * 0.24 + position.z * 0.065) * (0.12 + uMid * 0.22)
+    + position.z * 0.012;
+  float ca = cos(twist);
+  float sa = sin(twist);
+  vec2 twisted = vec2(
+    position.x * ca - position.y * sa,
+    position.x * sa + position.y * ca
+  );
+
+  float ripple = sin(uTime * 1.8 + position.z * 0.42 + angle * 1.7);
+  float angularLobe = sin(angle * 3.0 + uTime * 0.58 + position.z * 0.19);
   float pulse = 1.0 + uBass * (0.12 + 0.08 * sin(uTime * 3.0 + position.z * 0.4))
-    + uTreble * sin(uTime * 4.2 + position.z * 0.7) * 0.075;
-  animated.xy *= pulse;
-  animated.xy += vec2(sin(uTime * 0.55 + position.z * 0.12), cos(uTime * 0.46 + position.z * 0.10)) * (0.045 + uMid * 0.18);
+    + uTreble * sin(uTime * 4.2 + position.z * 0.7) * 0.075
+    + angularLobe * (0.018 + uTreble * 0.038);
+  animated.xy = twisted * pulse;
+  animated.xy += vec2(
+    sin(uTime * 0.55 + position.z * 0.12 + angle * 0.4),
+    cos(uTime * 0.46 + position.z * 0.10 - angle * 0.3)
+  ) * (0.045 + uMid * 0.18);
   animated.z += ripple * (0.07 + uTreble * 0.20);
+  animated.z += angularLobe * (0.025 + uBass * 0.045);
+
   vec4 viewPosition = modelViewMatrix * vec4(animated, 1.0);
   gl_Position = projectionMatrix * viewPosition;
   vColor = color;
-  vGlow = 0.86 + uBass * 0.95 + uTreble * 0.72 + uBeatPulse * 0.7;
+  float railPulse = 0.5 + 0.5 * sin(angle * 4.0 - uTime * 1.1 + position.z * 0.23);
+  vGlow = 0.74 + uBass * 1.15 + uTreble * 0.68 + uBeatPulse * 0.8
+    + railPulse * uTreble * 0.28 + smoothstep(0.0, 3.3, radius) * uMid * 0.18;
 }
 `;
 

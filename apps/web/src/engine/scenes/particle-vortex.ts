@@ -38,23 +38,41 @@ varying vec2 vUv;
 varying vec3 vColor;
 varying float vAlpha;
 void main() {
-  float angle = atan(iPosition.y, iPosition.x);
-  angle += uTime * (0.48 + uMid * 1.75) + iPhase * (0.14 + 0.18 * uTurbulence);
-  float radius = length(iPosition.xy);
-  radius += sin(uTime * 1.7 + iPhase * 5.0) * (0.18 + uTurbulence * 0.42);
-  radius += uBass * (0.34 + 0.58 * sin(iPhase * 7.0));
+  float baseAngle = atan(iPosition.y, iPosition.x);
+  float baseRadius = length(iPosition.xy);
+  float depthPhase = iPosition.z * 0.24;
+
+  // Radius-dependent rotation creates a curling arm rather than a flat rotating disc.
+  float inwardCurl = 2.35 / (baseRadius + 0.62);
+  float angle = baseAngle
+    + uTime * (0.28 + uMid * 1.5)
+    + inwardCurl * (0.78 + uTurbulence * 0.22)
+    + iPhase * (0.08 + 0.13 * uTurbulence);
+
+  float armWave = sin(baseAngle * 3.0 - uTime * 0.85 + depthPhase);
+  float radius = baseRadius
+    + sin(uTime * 1.35 + iPhase * 3.1 + depthPhase) * (0.10 + uTurbulence * 0.24)
+    + armWave * (0.06 + uMid * 0.16)
+    + uBass * (0.28 + 0.42 * sin(iPhase * 4.0));
+
   vec3 animatedPosition = vec3(cos(angle) * radius, sin(angle) * radius, iPosition.z);
-  animatedPosition.z += sin(uTime * 1.25 + iPhase * 3.2) * (0.25 + uTreble * 0.52);
-  animatedPosition.xy *= 1.0 + uLevel * 0.12 + uBass * 0.10;
+  animatedPosition.z += sin(angle * 1.7 + iPhase * 1.4 + uTime * 0.72)
+    * (0.22 + uTreble * 0.72 + uTurbulence * 0.08);
+  animatedPosition.z += sin(baseRadius * 1.45 - uTime * 1.4 + iPhase) * (0.08 + uMid * 0.14);
+  animatedPosition.xy *= 1.0 + uLevel * 0.12 + uBass * 0.12;
+
   vec4 viewPosition = modelViewMatrix * vec4(animatedPosition, 1.0);
-  float billboardSize = (0.038 + iSize * 0.042 + uTreble * 0.042) * (1.0 + uLevel * 0.35);
+  float billboardSize = (0.034 + iSize * 0.044 + uTreble * 0.046) * (1.0 + uLevel * 0.28);
   viewPosition.xy += position.xy * billboardSize;
   gl_Position = projectionMatrix * viewPosition;
   vUv = uv;
-  float hue = clamp((sin(angle * 1.5 + iPhase) + 1.0) * 0.5, 0.0, 1.0);
-  vColor = mix(uColorA, uColorB, hue);
-  vColor = mix(vColor, uColorC, clamp(uBass * 0.85, 0.0, 0.85));
-  vAlpha = 0.72 + uLevel * 0.34 + uTreble * 0.32;
+
+  float flow = clamp(0.5 + 0.5 * sin(angle * 1.15 + depthPhase * 2.0 + uTime * 0.24), 0.0, 1.0);
+  vColor = mix(uColorA, uColorB, flow);
+  float edgeEnergy = smoothstep(0.3, 4.2, baseRadius);
+  vColor = mix(vColor, uColorC, clamp(edgeEnergy * 0.55 + uTreble * 0.18, 0.0, 0.85));
+  vColor = mix(vColor, uColorC, clamp(uBass * 0.62, 0.0, 0.72));
+  vAlpha = 0.68 + uLevel * 0.32 + uTreble * 0.3;
 }
 `;
 
@@ -79,6 +97,8 @@ export class ParticleVortexScene implements Scene {
   private particleGeometry: THREE.InstancedBufferGeometry | null = null;
   private particleMaterial: THREE.ShaderMaterial | null = null;
   private particles: THREE.Mesh<THREE.InstancedBufferGeometry, THREE.ShaderMaterial> | null = null;
+  private core: THREE.Mesh<THREE.SphereGeometry, THREE.MeshBasicMaterial> | null = null;
+  private coreRing: THREE.Mesh<THREE.TorusGeometry, THREE.MeshBasicMaterial> | null = null;
   private colors: readonly [string, string, string] = DEFAULT_SCENE_THEME.colors;
   private quality: QualityTier = 'high';
   private elapsed = 0;
@@ -153,7 +173,39 @@ export class ParticleVortexScene implements Scene {
     this.particles = new THREE.Mesh(geometry, material);
     this.particles.frustumCulled = false;
     this.particles.name = 'particle-vortex-100k';
+    this.particles.renderOrder = 1;
     context.scene.add(this.particles);
+
+    this.core = new THREE.Mesh(
+      new THREE.SphereGeometry(0.19, 24, 16),
+      new THREE.MeshBasicMaterial({
+        color: this.colors[1],
+        transparent: true,
+        opacity: 0.94,
+        blending: THREE.AdditiveBlending,
+        depthWrite: false,
+        toneMapped: false,
+      }),
+    );
+    this.core.name = 'vortex-singularity';
+    this.core.renderOrder = 2;
+    context.scene.add(this.core);
+
+    this.coreRing = new THREE.Mesh(
+      new THREE.TorusGeometry(0.56, 0.012, 8, 128),
+      new THREE.MeshBasicMaterial({
+        color: this.colors[0],
+        transparent: true,
+        opacity: 0.76,
+        blending: THREE.AdditiveBlending,
+        depthWrite: false,
+        toneMapped: false,
+      }),
+    );
+    this.coreRing.name = 'vortex-accretion-ring';
+    this.coreRing.rotation.set(0.82, 0.18, 0.3);
+    this.coreRing.renderOrder = 2;
+    context.scene.add(this.coreRing);
     this.setTheme(this.colorsToTheme());
   }
 
@@ -169,6 +221,17 @@ export class ParticleVortexScene implements Scene {
     uniforms.uLevel.value = Math.max(visualEnergy(audioFrame.level, 1.55, 0.78), this.beatGlow * 0.9);
     uniforms.uTurbulence.value = Math.max(0, Math.min(2, params.particleTurbulence ?? 0.5));
     uniforms.uPointSize.value = 1 + Math.max(0, Math.min(2, params.colorFlash ?? 0)) * 0.15;
+    if (this.core !== null) {
+      this.core.scale.setScalar(0.88 + this.beatGlow * 0.62 + uniforms.uBass.value * 0.2);
+      if (this.core.material instanceof THREE.MeshBasicMaterial) {
+        this.core.material.opacity = 0.76 + this.beatGlow * 0.24;
+      }
+    }
+    if (this.coreRing !== null) {
+      this.coreRing.rotation.z += dt * (0.35 + uniforms.uMid.value * 0.8);
+      this.coreRing.rotation.x = 0.82 + Math.sin(this.elapsed * 0.22) * 0.12;
+      this.coreRing.scale.setScalar(1 + this.beatGlow * 0.15 + uniforms.uBass.value * 0.08);
+    }
   }
 
   render(): void {
@@ -184,6 +247,8 @@ export class ParticleVortexScene implements Scene {
       this.particleMaterial.uniforms.uColorB.value.set(this.colors[1]);
       this.particleMaterial.uniforms.uColorC.value.set(this.colors[2]);
     }
+    if (this.core !== null) this.core.material.color.set(this.colors[1]);
+    if (this.coreRing !== null) this.coreRing.material.color.set(this.colors[0]);
   }
 
   setQuality(tier: QualityTier): void {
@@ -196,13 +261,23 @@ export class ParticleVortexScene implements Scene {
   dispose(): void {
     if (this.disposed) return;
     this.disposed = true;
-    if (this.context !== null && this.particles !== null) this.context.scene.remove(this.particles);
+    if (this.context !== null) {
+      if (this.particles !== null) this.context.scene.remove(this.particles);
+      if (this.core !== null) this.context.scene.remove(this.core);
+      if (this.coreRing !== null) this.context.scene.remove(this.coreRing);
+    }
     this.particleGeometry?.dispose();
     this.particleMaterial?.dispose();
+    this.core?.geometry.dispose();
+    this.core?.material.dispose();
+    this.coreRing?.geometry.dispose();
+    this.coreRing?.material.dispose();
     this.context = null;
     this.particleGeometry = null;
     this.particleMaterial = null;
     this.particles = null;
+    this.core = null;
+    this.coreRing = null;
   }
 
   private colorsToTheme(): SceneTheme {
