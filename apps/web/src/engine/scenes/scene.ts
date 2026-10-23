@@ -49,6 +49,8 @@ export interface Scene {
   render(): void;
   setTheme(theme: SceneTheme): void;
   setQuality(tier: QualityTier): void;
+  /** Optional live reduced-motion hook for scenes with additional motion-specific behavior. */
+  setReducedMotion?(enabled: boolean): void;
   dispose(): void;
 }
 
