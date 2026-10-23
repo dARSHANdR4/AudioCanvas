@@ -2,10 +2,16 @@
 
 import { useEffect, useRef } from 'react';
 import * as THREE from 'three';
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { readLatestAudioFrame } from '@/engine/audio/audio-frame-store';
 import { createScene, SCENE_OPTIONS, type SceneId } from '@/engine/scenes/scene-registry';
 import { initialQualityForConcurrency } from '@/engine/scenes/render-quality';
 import { getSelectedScene, subscribeToSceneSelection } from '@/engine/scenes/scene-selection-store';
+import {
+  subscribeToCameraCommands,
+  type CameraCommand,
+  type CameraPreset,
+} from '@/engine/scenes/camera-controls-store';
 import {
   DEFAULT_SCENE_PARAMS,
   type QualityTier,
@@ -55,7 +61,11 @@ export function VisualizerCanvas() {
     let lastFrameTime = performance.now();
     let listenerAdded = false;
     let unsubscribeSceneSelection: (() => void) | null = null;
+    let unsubscribeCameraCommands: (() => void) | null = null;
     let activeSceneCamera: THREE.PerspectiveCamera | null = null;
+    let cameraControls: OrbitControls | null = null;
+    let renderStage: THREE.Scene | null = null;
+    let cameraRollDegrees = 0;
 
     const handleResize = () => {
       if (renderer === null) return;
@@ -65,6 +75,85 @@ export function VisualizerCanvas() {
       if (activeSceneCamera !== null) {
         activeSceneCamera.aspect = width / height;
         activeSceneCamera.updateProjectionMatrix();
+      }
+    };
+
+    const applyCameraPreset = (preset: CameraPreset) => {
+      if (activeSceneCamera === null || cameraControls === null) return;
+
+      cameraRollDegrees = 0;
+      activeSceneCamera.up.set(0, 1, 0);
+      cameraControls.reset();
+
+      switch (preset) {
+        case 'front':
+          activeSceneCamera.position.set(0, 0, 10.3);
+          break;
+        case 'side':
+          activeSceneCamera.position.set(10.3, 0, 0);
+          break;
+        case 'top':
+          activeSceneCamera.position.set(0, 10.3, 0);
+          activeSceneCamera.up.set(0, 0, -1);
+          break;
+        case 'low-angle':
+          activeSceneCamera.position.set(0, -3.1, 10.3);
+          break;
+        case 'cinematic':
+          activeSceneCamera.position.set(7, 4.2, 10);
+          break;
+      }
+
+      cameraControls.target.set(0, 0, 0);
+      cameraControls.update();
+      cameraControls.saveState();
+      host.dataset.cameraPreset = preset;
+      host.dataset.cameraRoll = '0';
+    };
+
+    const handleCameraCommand = (command: CameraCommand) => {
+      if (cameraControls === null || activeSceneCamera === null) return;
+
+      switch (command.type) {
+        case 'preset':
+          applyCameraPreset(command.preset);
+          break;
+        case 'reset':
+          applyCameraPreset('front');
+          renderStage?.rotation.set(0, 0, 0);
+          host.dataset.objectAxisX = '0';
+          host.dataset.objectAxisY = '0';
+          host.dataset.objectAxisZ = '0';
+          break;
+        case 'roll':
+          cameraRollDegrees = THREE.MathUtils.clamp(command.degrees, -180, 180);
+          host.dataset.cameraRoll = String(cameraRollDegrees);
+          break;
+        case 'axis': {
+          const degrees = THREE.MathUtils.clamp(command.degrees, -180, 180);
+          if (renderStage !== null) {
+            const radians = THREE.MathUtils.degToRad(degrees);
+            if (command.axis === 'x') renderStage.rotation.x = radians;
+            if (command.axis === 'y') renderStage.rotation.y = radians;
+            if (command.axis === 'z') renderStage.rotation.z = radians;
+          }
+          if (command.axis === 'x') host.dataset.objectAxisX = String(degrees);
+          if (command.axis === 'y') host.dataset.objectAxisY = String(degrees);
+          if (command.axis === 'z') host.dataset.objectAxisZ = String(degrees);
+          break;
+        }
+        case 'sensitivity': {
+          const value = THREE.MathUtils.clamp(command.value, 0.4, 2);
+          cameraControls.rotateSpeed = value;
+          cameraControls.zoomSpeed = value;
+          cameraControls.panSpeed = value;
+          break;
+        }
+        case 'toggle':
+          if (command.control === 'rotate') cameraControls.enableRotate = command.enabled;
+          if (command.control === 'pan') cameraControls.enablePan = command.enabled;
+          if (command.control === 'zoom') cameraControls.enableZoom = command.enabled;
+          break;
       }
     };
 
@@ -113,10 +202,30 @@ export function VisualizerCanvas() {
 
       const stage = new THREE.Scene();
       stage.background = new THREE.Color('#0a0a12');
+      renderStage = stage;
+      host.dataset.objectAxisX = '0';
+      host.dataset.objectAxisY = '0';
+      host.dataset.objectAxisZ = '0';
       const camera = new THREE.PerspectiveCamera(46, 1, 0.1, 80);
       camera.position.set(0, 0, 10.3);
       activeSceneCamera = camera;
       renderContext = { renderer, scene: stage, camera };
+
+      // A shared camera controller keeps navigation consistent across all scene families.
+      // UI commands stay outside React frame state; audio analysis and scene selection are unchanged.
+      cameraControls = new OrbitControls(camera, renderer.domElement);
+      cameraControls.enableDamping = true;
+      cameraControls.dampingFactor = 0.075;
+      cameraControls.screenSpacePanning = true;
+      cameraControls.minDistance = 3.5;
+      cameraControls.maxDistance = 28;
+      cameraControls.zoomToCursor = true;
+      cameraControls.target.set(0, 0, 0);
+      cameraControls.update();
+      cameraControls.saveState();
+      host.dataset.cameraPreset = 'front';
+      host.dataset.cameraRoll = '0';
+      unsubscribeCameraCommands = subscribeToCameraCommands(handleCameraCommand);
 
       handleResize();
       if (typeof ResizeObserver !== 'undefined') {
@@ -134,6 +243,12 @@ export function VisualizerCanvas() {
         const dt = Math.min(0.05, Math.max(0, (now - lastFrameTime) / 1000));
         lastFrameTime = now;
         const frameStarted = performance.now();
+        cameraControls?.update();
+        if (activeSceneCamera !== null && cameraControls !== null && cameraRollDegrees !== 0) {
+          // Rebuild the base look direction before applying roll so it never accumulates frame-to-frame.
+          activeSceneCamera.lookAt(cameraControls.target);
+          activeSceneCamera.rotateZ(THREE.MathUtils.degToRad(cameraRollDegrees));
+        }
         if (activeScene !== null) {
           activeScene.update(readLatestAudioFrame() ?? IDLE_AUDIO_FRAME, DEFAULT_SCENE_PARAMS, dt);
           activeScene.render();
@@ -154,6 +269,8 @@ export function VisualizerCanvas() {
       animationFrame = window.requestAnimationFrame(renderLoop);
     } catch {
       // Scene initialization errors are handled inside switchScene; this catch covers renderer setup.
+      unsubscribeCameraCommands?.();
+      cameraControls?.dispose();
       renderer?.dispose();
       if (renderer?.domElement.parentElement === host) host.removeChild(renderer.domElement);
       host.querySelector('.visualizer-canvas__webgl')?.remove();
@@ -163,6 +280,8 @@ export function VisualizerCanvas() {
     return () => {
       window.cancelAnimationFrame(animationFrame);
       unsubscribeSceneSelection?.();
+      unsubscribeCameraCommands?.();
+      cameraControls?.dispose();
       resizeObserver?.disconnect();
       if (listenerAdded) window.removeEventListener('resize', handleResize);
       activeScene?.dispose();
