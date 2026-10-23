@@ -16,8 +16,7 @@ function moveToward(current: number, target: number, maxDelta: number): number {
  */
 export class SafetyFrameProcessor {
   private readonly output: AudioFrame;
-  private readonly elapsedSeconds = 0;
-  private elapsed = this.elapsedSeconds;
+  private elapsed = 0;
   private lastAcceptedBeat = Number.NEGATIVE_INFINITY;
   private wasActive = false;
 
