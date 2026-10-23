@@ -12,6 +12,13 @@ import {
   type CameraCommand,
   type CameraPreset,
 } from '@/engine/scenes/camera-controls-store';
+import { SafetyFrameProcessor } from '@/engine/scenes/safety-frame-processor';
+import {
+  getSafetySettings,
+  initializeSafetySettings,
+  subscribeToSafetySettings,
+  type SafetySettings,
+} from '@/engine/scenes/safety-settings-store';
 import {
   DEFAULT_SCENE_PARAMS,
   type QualityTier,
@@ -62,10 +69,25 @@ export function VisualizerCanvas() {
     let listenerAdded = false;
     let unsubscribeSceneSelection: (() => void) | null = null;
     let unsubscribeCameraCommands: (() => void) | null = null;
+    let unsubscribeSafetySettings: (() => void) | null = null;
     let activeSceneCamera: THREE.PerspectiveCamera | null = null;
     let cameraControls: OrbitControls | null = null;
     let renderStage: THREE.Scene | null = null;
     let cameraRollDegrees = 0;
+    let safetySettings: SafetySettings = getSafetySettings();
+    let visibilityListenerAdded = false;
+    let handleVisibilityChange: (() => void) | null = null;
+    const safetyFrameProcessor = new SafetyFrameProcessor(
+      IDLE_AUDIO_FRAME.spectrum.length,
+      IDLE_AUDIO_FRAME.waveform.length,
+    );
+
+    const handleSafetySettingsChange = (nextSettings: SafetySettings) => {
+      safetySettings = nextSettings;
+      host.dataset.safetyFlashLimiter = String(nextSettings.flashLimiter);
+      host.dataset.safetyReducedMotion = String(nextSettings.reducedMotion);
+      activeScene?.setReducedMotion?.(nextSettings.reducedMotion);
+    };
 
     const handleResize = () => {
       if (renderer === null) return;
@@ -166,7 +188,8 @@ export function VisualizerCanvas() {
 
       try {
         const nextScene = createScene(sceneId);
-        nextScene.init(renderContext, { quality });
+        nextScene.init(renderContext, { quality, reducedMotion: safetySettings.reducedMotion });
+        nextScene.setReducedMotion?.(safetySettings.reducedMotion);
         activeScene = nextScene;
         host.dataset.scene = sceneId;
         host.dataset.quality = quality;
@@ -184,6 +207,12 @@ export function VisualizerCanvas() {
     };
 
     try {
+      initializeSafetySettings();
+      safetySettings = getSafetySettings();
+      host.dataset.safetyFlashLimiter = String(safetySettings.flashLimiter);
+      host.dataset.safetyReducedMotion = String(safetySettings.reducedMotion);
+      unsubscribeSafetySettings = subscribeToSafetySettings(handleSafetySettingsChange);
+
       // Avoid starting a 100k-particle shader on small-core/low-power devices. High quality
       // remains available on stronger devices, and the existing frame-time monitor can degrade it.
       quality = initialQualityForConcurrency(window.navigator.hardwareConcurrency);
@@ -242,6 +271,11 @@ export function VisualizerCanvas() {
         if (renderer === null) return;
         const dt = Math.min(0.05, Math.max(0, (now - lastFrameTime) / 1000));
         lastFrameTime = now;
+        if (document.hidden) {
+          // Skip scene updates and GPU rendering while the browser tab is hidden.
+          animationFrame = window.requestAnimationFrame(renderLoop);
+          return;
+        }
         const frameStarted = performance.now();
         cameraControls?.update();
         if (activeSceneCamera !== null && cameraControls !== null && cameraRollDegrees !== 0) {
@@ -250,7 +284,10 @@ export function VisualizerCanvas() {
           activeSceneCamera.rotateZ(THREE.MathUtils.degToRad(cameraRollDegrees));
         }
         if (activeScene !== null) {
-          activeScene.update(readLatestAudioFrame() ?? IDLE_AUDIO_FRAME, DEFAULT_SCENE_PARAMS, dt);
+          const sourceFrame = readLatestAudioFrame() ?? IDLE_AUDIO_FRAME;
+          const safeFrame = safetyFrameProcessor.process(sourceFrame, dt, safetySettings);
+          const visualDt = safetySettings.reducedMotion ? dt * 0.55 : dt;
+          activeScene.update(safeFrame, DEFAULT_SCENE_PARAMS, visualDt);
           activeScene.render();
         }
 
@@ -266,10 +303,23 @@ export function VisualizerCanvas() {
         animationFrame = window.requestAnimationFrame(renderLoop);
       };
 
+      handleVisibilityChange = () => {
+        lastFrameTime = performance.now();
+        if (!document.hidden && renderer !== null) {
+          window.cancelAnimationFrame(animationFrame);
+          animationFrame = window.requestAnimationFrame(renderLoop);
+        }
+      };
+      document.addEventListener('visibilitychange', handleVisibilityChange);
+      visibilityListenerAdded = true;
       animationFrame = window.requestAnimationFrame(renderLoop);
     } catch {
       // Scene initialization errors are handled inside switchScene; this catch covers renderer setup.
       unsubscribeCameraCommands?.();
+      unsubscribeSafetySettings?.();
+      if (visibilityListenerAdded && handleVisibilityChange !== null) {
+        document.removeEventListener('visibilitychange', handleVisibilityChange);
+      }
       cameraControls?.dispose();
       renderer?.dispose();
       if (renderer?.domElement.parentElement === host) host.removeChild(renderer.domElement);
@@ -281,6 +331,10 @@ export function VisualizerCanvas() {
       window.cancelAnimationFrame(animationFrame);
       unsubscribeSceneSelection?.();
       unsubscribeCameraCommands?.();
+      unsubscribeSafetySettings?.();
+      if (visibilityListenerAdded && handleVisibilityChange !== null) {
+        document.removeEventListener('visibilitychange', handleVisibilityChange);
+      }
       cameraControls?.dispose();
       resizeObserver?.disconnect();
       if (listenerAdded) window.removeEventListener('resize', handleResize);
