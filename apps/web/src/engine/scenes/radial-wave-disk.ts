@@ -14,7 +14,6 @@ import {
 
 const BAR_COUNT = 180;
 const INNER_RADIUS = 1.96;
-const REDUCED_MOTION_QUERY = '(prefers-reduced-motion: reduce)';
 
 function barCountForQuality(tier: QualityTier): number {
   if (tier === 'low') return 64;
@@ -57,9 +56,7 @@ export class RadialWaveDiskScene implements Scene {
     this.context = context;
     this.disposed = false;
     this.quality = config.quality ?? 'high';
-    this.reducedMotion = config.reducedMotion ?? (
-      typeof window !== 'undefined' && window.matchMedia(REDUCED_MOTION_QUERY).matches
-    );
+    this.reducedMotion = config.reducedMotion ?? false;
     this.setTheme(config.theme ?? DEFAULT_SCENE_THEME);
     this.group = new THREE.Group();
     this.group.name = 'radial-wave-disk-root';
@@ -126,7 +123,7 @@ export class RadialWaveDiskScene implements Scene {
     this.elapsed += dt;
     const scale = Math.max(0, Math.min(2, params.meshScale ?? 1));
     const rotationSpeed = Math.max(0, Math.min(2, params.rotationSpeed ?? 0.18));
-    const motionScale = this.reducedMotion ? 0.12 : 1;
+    const motionScale = this.reducedMotion ? 0.4 : 1;
     const activeBars = barCountForQuality(this.quality);
     this.bars.count = activeBars;
 
@@ -177,6 +174,10 @@ export class RadialWaveDiskScene implements Scene {
       this.ringMaterials[0]?.color.set(this.colors[0]);
       this.ringMaterials[1]?.color.set(this.colors[2]);
     }
+  }
+
+  setReducedMotion(enabled: boolean): void {
+    this.reducedMotion = enabled;
   }
 
   setQuality(tier: QualityTier): void {
