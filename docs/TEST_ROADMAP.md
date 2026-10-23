@@ -29,6 +29,7 @@
 | TC-11 | Open share link in a fresh browser | Same scene, theme and mappings load |
 | TC-12 | Flash limiter on with a strobe-heavy track | No more than 3 full-screen flashes per second |
 | TC-13 | Delete account | All user presets and sessions removed |
+| TC-14 | Camera Studio scroll & jump | Jump to XYZ stays inside the popup; scrolling reaches the end and returns to the top; fixed Reset remains reachable; page scroll position is unchanged |
 
 ## 6.3 Roadmap (Milestones)
 
@@ -60,6 +61,8 @@
 ## 6.5 Definition of Done
 
 Code reviewed and merged; unit and e2e tests green; no new accessibility violations; performance budget respected; documentation updated; feature behind a flag if incomplete; analytics events added where specified.
+
+**Required feature smoke-test habit:** before merging every user-facing feature, add or update a feature-specific automated smoke test that exercises the main interaction path—not only rendering/builds. For UI changes, test open/use/close or reset flows, keyboard/focus where relevant, scroll both directions for scrollable panels, and verify the page/workspace does not unexpectedly scroll or trap controls. After CI passes, open the Vercel preview and perform a short manual smoke test at desktop size and at least one narrow viewport. Record the result in the PR; don't describe the feature as verified if only static HTML/build checks ran. Performance claims still require separate reference-device measurement.
 
 ## 6.6 Post-MVP Backlog
 
