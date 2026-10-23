@@ -1,0 +1,61 @@
+name: AudioCanvas Performance Soak
+
+on:
+  workflow_dispatch:
+    inputs:
+      base_url:
+        description: Deployed AudioCanvas URL to test
+        required: false
+        default: https://audiocanvas-darshandr4s-projects.vercel.app
+        type: string
+      soak_minutes:
+        description: Session duration
+        required: true
+        default: "30"
+        type: choice
+        options:
+          - "5"
+          - "15"
+          - "30"
+  schedule:
+    - cron: "30 3 * * 0"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: audiocanvas-performance-soak
+  cancel-in-progress: false
+
+jobs:
+  performance-soak:
+    name: Browser memory and renderer resource soak
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - name: Check out source
+        uses: actions/checkout@v4
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - name: Install dependencies
+        run: npm install --no-audit --no-fund
+      - name: Install Chromium
+        run: npx playwright install --with-deps chromium
+      - name: Run the extended performance soak
+        env:
+          PLAYWRIGHT_BASE_URL: ${{ github.event.inputs.base_url || 'https://audiocanvas-darshandr4s-projects.vercel.app' }}
+          RUN_PERFORMANCE_SOAK: "1"
+          PERFORMANCE_SOAK_MINUTES: ${{ github.event.inputs.soak_minutes || '30' }}
+          AUDIOCANVAS_PERF_MIN_FPS: "5"
+        run: npm run test:performance:soak
+      - name: Upload performance report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: audiocanvas-performance-soak-${{ github.run_number }}
+          path: test-results/performance/
+          if-no-files-found: warn
+          retention-days: 30
