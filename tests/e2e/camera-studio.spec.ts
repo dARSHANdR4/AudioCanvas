@@ -23,6 +23,16 @@ test('Camera Studio provides camera presets, roll and a front-view reset', async
   await expect(panel).toBeVisible();
   await expect(panel.getByRole('button', { name: 'Reset view' })).toBeVisible();
 
+  const viewport = page.viewportSize();
+  const panelBox = await panel.boundingBox();
+  expect(viewport).not.toBeNull();
+  expect(panelBox).not.toBeNull();
+  if (viewport === null || panelBox === null) throw new Error('Expected a visible camera panel and browser viewport');
+  expect(panelBox.x).toBeGreaterThanOrEqual(0);
+  expect(panelBox.y).toBeGreaterThanOrEqual(0);
+  expect(panelBox.x + panelBox.width).toBeLessThanOrEqual(viewport.width);
+  expect(panelBox.y + panelBox.height).toBeLessThanOrEqual(viewport.height);
+
   const initialScene = await canvas.getAttribute('data-scene');
   await panel.getByRole('button', { name: 'Side view' }).click();
   await expect(canvas).toHaveAttribute('data-camera-preset', 'side');
