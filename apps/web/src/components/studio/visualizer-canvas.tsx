@@ -273,6 +273,7 @@ export function VisualizerCanvas() {
         lastFrameTime = now;
         if (document.hidden) {
           // Stop the frame loop entirely while hidden; visibilitychange restarts it.
+          host.dataset.renderPaused = 'true';
           animationFrame = 0;
           return;
         }
@@ -305,6 +306,7 @@ export function VisualizerCanvas() {
 
       handleVisibilityChange = () => {
         lastFrameTime = performance.now();
+        host.dataset.renderPaused = String(document.hidden);
         if (!document.hidden && renderer !== null && animationFrame === 0) {
           lastFrameTime = performance.now();
           animationFrame = window.requestAnimationFrame(renderLoop);
@@ -312,6 +314,7 @@ export function VisualizerCanvas() {
       };
       document.addEventListener('visibilitychange', handleVisibilityChange);
       visibilityListenerAdded = true;
+      host.dataset.renderPaused = String(document.hidden);
       animationFrame = window.requestAnimationFrame(renderLoop);
     } catch {
       // Scene initialization errors are handled inside switchScene; this catch covers renderer setup.
