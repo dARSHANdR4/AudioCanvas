@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import {
   dispatchCameraCommand,
   type CameraPreset,
@@ -25,6 +25,8 @@ const TOGGLES: { id: CameraToggle; label: string }[] = [
 
 export function CameraStudio() {
   const [open, setOpen] = useState(false);
+  const objectAxesRef = useRef<HTMLDivElement>(null);
+  const scrollBodyRef = useRef<HTMLDivElement>(null);
   const [roll, setRoll] = useState(0);
   const [sensitivity, setSensitivity] = useState(1);
   const [axes, setAxes] = useState<Record<ObjectAxis, number>>({ x: 0, y: 0, z: 0 });
@@ -91,20 +93,32 @@ export function CameraStudio() {
               <p className={styles.eyebrow}>VIEWPORT / NAVIGATION</p>
               <h2>Free camera</h2>
             </div>
-            <button
-              aria-label="Close Camera Studio"
-              className={styles.close}
-              onClick={() => setOpen(false)}
-              type="button"
-            >
-              ×
-            </button>
+            <div className={styles.headerActions}>
+              <button
+                className={styles.axisJump}
+                onClick={() => {
+                  objectAxesRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                }}
+                type="button"
+              >
+                XYZ axes ↓
+              </button>
+              <button
+                aria-label="Close Camera Studio"
+                className={styles.close}
+                onClick={() => setOpen(false)}
+                type="button"
+              >
+                ×
+              </button>
+            </div>
           </header>
 
           <p className={styles.hint}>
-            Drag to orbit · Scroll to zoom · Right-drag to pan
+            Drag to orbit · Scroll to zoom · Use XYZ axes for object rotation
           </p>
 
+          <div className={styles.scrollBody} ref={scrollBodyRef}>
           <div className={styles.section}>
             <div className={styles.sectionHeading}>
               <span>QUICK ANGLES</span>
@@ -152,6 +166,10 @@ export function CameraStudio() {
           </div>
 
           <div className={styles.section}>
+            <div className={styles.sectionHeading}>
+              <span>CAMERA CONTROL</span>
+              <span>SPEED / ROLL</span>
+            </div>
             <label className={styles.sliderLabel}>
               <span>Camera sensitivity</span>
               <output>{sensitivity.toFixed(1)}×</output>
@@ -172,7 +190,7 @@ export function CameraStudio() {
             />
 
             <label className={styles.sliderLabel}>
-              <span>Camera roll</span>
+              <span>Camera roll · tilt the viewing frame</span>
               <output>{roll}°</output>
             </label>
             <input
@@ -191,11 +209,14 @@ export function CameraStudio() {
             />
           </div>
 
-          <div className={styles.section}>
+          <div className={styles.section} ref={objectAxesRef} id="camera-object-axes">
             <div className={styles.sectionHeading}>
-              <span>OBJECT AXES</span>
-              <span>X / Y / Z</span>
+              <span>OBJECT ROTATION</span>
+              <span>INDEPENDENT X / Y / Z</span>
             </div>
+            <p className={styles.axisDescription}>
+              Rotate the visualization itself, independently from the camera view.
+            </p>
             {(['x', 'y', 'z'] as const).map((axis) => (
               <div key={axis}>
                 <label className={styles.sliderLabel}>
@@ -219,9 +240,10 @@ export function CameraStudio() {
               </div>
             ))}
           </div>
+          </div>
 
           <footer className={styles.footer}>
-            <span>Changes apply live</span>
+            <span>View + object reset</span>
             <button className={styles.reset} onClick={resetView} type="button">
               ↺ Reset view
             </button>
