@@ -68,6 +68,26 @@ describe('SafetyFrameProcessor', () => {
     expect(output.bass).toBe(0);
   });
 
+  it('adapts buffers when the user changes FFT size without allocating per frame', () => {
+    const processor = new SafetyFrameProcessor(32, 64);
+    processor.process(makeFrame(), 1 / 60, limiterOnly);
+
+    const smallerFrame: AudioFrame = {
+      time: 2,
+      bass: 0.4,
+      mid: 0.2,
+      treble: 0.1,
+      level: 0.3,
+      beat: false,
+      spectrum: new Uint8Array(16).fill(80),
+      waveform: new Float32Array(8).fill(0.25),
+    };
+    const filtered = processor.process(smallerFrame, 1 / 60, limiterOnly);
+
+    expect(filtered.spectrum.length).toBe(16);
+    expect(filtered.waveform.length).toBe(8);
+  });
+
   it('reuses its output object and typed buffers across render frames', () => {
     const processor = new SafetyFrameProcessor(32, 64);
     const first = processor.process(makeFrame({ bass: 0.2 }), 1 / 60, limiterOnly);
