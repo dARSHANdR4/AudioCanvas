@@ -1,4 +1,4 @@
-import { expect, test, type Page, type TestInfo } from '@playwright/test';
+import { expect, test, type Page } from '@playwright/test';
 
 const scenes = [
   { id: 'radial-wave-disk', name: 'Radial Wave Disk' },
