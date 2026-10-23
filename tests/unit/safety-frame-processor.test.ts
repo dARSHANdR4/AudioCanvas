@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
-import type { AudioFrame } from '../apps/web/src/engine/audio/analysis';
-import { SafetyFrameProcessor } from '../apps/web/src/engine/scenes/safety-frame-processor';
-import type { SafetySettings } from '../apps/web/src/engine/scenes/safety-settings-store';
+import type { AudioFrame } from '../../apps/web/src/engine/audio/analysis';
+import { SafetyFrameProcessor } from '../../apps/web/src/engine/scenes/safety-frame-processor';
+import type { SafetySettings } from '../../apps/web/src/engine/scenes/safety-settings-store';
 
 const makeFrame = (options: Partial<Pick<AudioFrame, 'bass' | 'mid' | 'treble' | 'level' | 'beat'>> = {}): AudioFrame => ({
   time: 1,
