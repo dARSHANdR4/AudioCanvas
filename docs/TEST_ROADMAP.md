@@ -92,3 +92,12 @@ Node-based visual editor, custom GLSL snippets with sandboxing, additional scene
 - The renderer evaluates mappings in its existing animation loop using reusable smoothing values; raw audio frames stay outside React state.
 - Unit checks cover source extraction, intensity, invert, disabled mappings, clamping and smoothing. Playwright covers editor interactions, persistence, per-scene target schemas and live renderer mapping diagnostics.
 - The MVP is local-first. Cross-device/cloud sync, custom themes, effects/post-processing, undo/redo and shareable presets are not part of this increment.
+
+
+## 6.9 M3 — Theme presets
+
+- The Theme tab replaces the former static tab labels with working Mapping and Theme tabs; Effects and Audio stay visibly disabled until their own controls exist.
+- Five presets (Cyberpunk, Aurora, Ember, Ocean, Monochrome) are applied through the shared SceneTheme contract to the currently active scene without rebuilding it or restarting audio.
+- Theme choice is stored separately for each scene in localStorage. Reset restores Cyberpunk for the selected scene.
+- Unit tests validate preset palettes and per-scene selection; Playwright covers live application, scene isolation, reload persistence, and reset.
+- Custom colour pickers, post-processing effects, undo/redo, and cloud/shareable presets are intentionally deferred.

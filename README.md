@@ -71,7 +71,7 @@ Audio input/analysis and seven selectable visual styles are wired into the Studi
 | **M0 · Shell** | Repository, responsive routes, design tokens, docs, CI, smoke tests, deployment | ✅ Complete |
 | **M1 · Audio core** | Audio upload/microphone, analyser, frequency bands, beat detection, timeline and demo track | ✅ Complete — CI and live smoke test passed |
 | **M2 · Render core** | Three.js renderer, seven visualization styles and scene switching | 🟢 Hosted 30-minute resource soak passed; reference-device FPS remains a separate check |
-| **M3 · Customization** | Audio-to-visual mappings, themes, effects, undo/redo | 🟡 Mapping MVP in progress — per-scene audio mappings are under CI validation |
+| **M3 · Customization** | Audio-to-visual mappings, themes, effects, undo/redo | 🟡 Audio Mapping MVP validated on live Studio; per-scene theme presets are the next increment |
 | **M4 · Presets** | Local presets and shareable URLs | 🧭 Planned |
 | **M5 · Export** | Browser-based video export and progress/cancel flow | 🧭 Planned |
 | **M6 · Backend** | Authentication, cloud presets, gallery APIs, storage | 🧭 Planned |
@@ -196,3 +196,8 @@ See [<code>COPYRIGHT</code>](COPYRIGHT) for the dedicated notice.
 
 
 For the full copyright and permissions notice, see [COPYRIGHT](./COPYRIGHT).
+
+
+### M3 theme preset increment
+
+The Theme tab offers five live palettes—Cyberpunk, Aurora, Ember, Ocean, and Monochrome. Palette choice is stored per scene in browser localStorage and applies to the active renderer without restarting audio. Effects, post-processing, custom color editing, and shareable presets remain separate follow-up work.

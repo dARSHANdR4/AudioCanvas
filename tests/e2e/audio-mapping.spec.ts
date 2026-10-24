@@ -31,10 +31,30 @@ test('Audio Mapping MVP edits mappings live, persists settings, and adapts per s
   });
   expect(storedMapping).toMatchObject({ source: 'treble', target: 'colorFlash', invert: true, enabled: false });
 
+  // Growing/shrinking the inspector must not resize the WebGL viewport or change its apparent zoom.
+  const stage = page.locator('.stage-wrap');
+  const initialStageSize = await stage.evaluate((element) => ({
+    width: element.clientWidth,
+    height: element.clientHeight,
+  }));
+
   await page.getByRole('button', { name: 'Add mapping' }).click();
   await expect(page.getByTestId('mapping-card')).toHaveCount(4);
+  const stageSizeAfterAdd = await stage.evaluate((element) => ({
+    width: element.clientWidth,
+    height: element.clientHeight,
+  }));
+  expect(Math.abs(stageSizeAfterAdd.width - initialStageSize.width)).toBeLessThanOrEqual(1);
+  expect(Math.abs(stageSizeAfterAdd.height - initialStageSize.height)).toBeLessThanOrEqual(1);
+
   await page.getByRole('button', { name: 'Remove mapping 4' }).click();
   await expect(page.getByTestId('mapping-card')).toHaveCount(3);
+  const stageSizeAfterRemove = await stage.evaluate((element) => ({
+    width: element.clientWidth,
+    height: element.clientHeight,
+  }));
+  expect(Math.abs(stageSizeAfterRemove.width - initialStageSize.width)).toBeLessThanOrEqual(1);
+  expect(Math.abs(stageSizeAfterRemove.height - initialStageSize.height)).toBeLessThanOrEqual(1);
   await page.getByRole('button', { name: 'Reset defaults' }).click();
   await expect(canvas).toHaveAttribute('data-mapping-count', '3');
 

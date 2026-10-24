@@ -5,7 +5,7 @@ import { CameraStudio } from './camera-studio';
 import { AudioWorkbench } from './audio-workbench';
 import { SceneSelector } from './scene-selector';
 import { SafetyControls } from './safety-controls';
-import { AudioMappingPanel } from './audio-mapping-panel';
+import { CustomizationPanels } from './customization-panels';
 
 export function StudioShell() {
   return (
@@ -67,13 +67,7 @@ export function StudioShell() {
         </section>
 
         <aside aria-label="Customization panels" className="studio-inspector">
-          <div className="inspector-tabs" aria-label="Customization panel sections">
-            <span className="inspector-tab inspector-tab--active">Mapping</span>
-            <span className="inspector-tab">Theme</span>
-            <span className="inspector-tab">Effects</span>
-            <span className="inspector-tab">Audio</span>
-          </div>
-          <AudioMappingPanel />
+          <CustomizationPanels />
           <SafetyControls placement="desktop" />
         </aside>
       </div>

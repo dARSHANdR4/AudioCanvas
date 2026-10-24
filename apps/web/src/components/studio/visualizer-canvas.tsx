@@ -6,6 +6,7 @@ import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { readLatestAudioFrame } from '@/engine/audio/audio-frame-store';
 import { evaluateAudioMappings, type MappingSmoothingState } from '@/engine/mapping/mapping-engine';
 import { getAudioMappingsForScene, initializeAudioMappings, subscribeToAudioMappings } from '@/engine/mapping/mapping-store';
+import { getSceneTheme, initializeSceneThemes, subscribeToSceneThemes } from '@/engine/scenes/scene-theme-store';
 import { createScene, SCENE_OPTIONS, type SceneId } from '@/engine/scenes/scene-registry';
 import { initialQualityForConcurrency } from '@/engine/scenes/render-quality';
 import { getSelectedScene, subscribeToSceneSelection } from '@/engine/scenes/scene-selection-store';
@@ -73,6 +74,7 @@ export function VisualizerCanvas() {
     let unsubscribeCameraCommands: (() => void) | null = null;
     let unsubscribeSafetySettings: (() => void) | null = null;
     let unsubscribeAudioMappings: (() => void) | null = null;
+    let unsubscribeSceneThemes: (() => void) | null = null;
     const mappingSmoothingState: MappingSmoothingState = new Map();
     let activeSceneCamera: THREE.PerspectiveCamera | null = null;
     let cameraControls: OrbitControls | null = null;
@@ -198,12 +200,14 @@ export function VisualizerCanvas() {
 
       try {
         const nextScene = createScene(sceneId);
-        nextScene.init(renderContext, { quality, reducedMotion: safetySettings.reducedMotion });
+        const theme = getSceneTheme(sceneId);
+        nextScene.init(renderContext, { quality, reducedMotion: safetySettings.reducedMotion, theme });
         nextScene.setReducedMotion?.(safetySettings.reducedMotion);
         activeScene = nextScene;
         mappingSmoothingState.clear();
         syncMappingDiagnostics(sceneId);
         host.dataset.scene = sceneId;
+        host.dataset.theme = theme.id;
         host.dataset.quality = quality;
         host.setAttribute('aria-label', `Audio-reactive ${metadata.name.toLowerCase()}`);
         host.closest('.studio-shell')?.querySelector<HTMLElement>('[data-scene-label]')?.replaceChildren(
@@ -221,8 +225,16 @@ export function VisualizerCanvas() {
     try {
       initializeSafetySettings();
       initializeAudioMappings();
+      initializeSceneThemes();
       unsubscribeAudioMappings = subscribeToAudioMappings((sceneId) => {
         if (sceneId === getSelectedScene()) syncMappingDiagnostics(sceneId);
+      });
+      unsubscribeSceneThemes = subscribeToSceneThemes((sceneId) => {
+        if (sceneId === getSelectedScene()) {
+          const theme = getSceneTheme(sceneId);
+          activeScene?.setTheme(theme);
+          host.dataset.theme = theme.id;
+        }
       });
       safetySettings = getSafetySettings();
       host.dataset.safetyFlashLimiter = String(safetySettings.flashLimiter);
@@ -349,6 +361,7 @@ export function VisualizerCanvas() {
       unsubscribeCameraCommands?.();
       unsubscribeSafetySettings?.();
       unsubscribeAudioMappings?.();
+      unsubscribeSceneThemes?.();
       if (visibilityListenerAdded && handleVisibilityChange !== null) {
         document.removeEventListener('visibilitychange', handleVisibilityChange);
       }
@@ -365,6 +378,7 @@ export function VisualizerCanvas() {
       unsubscribeCameraCommands?.();
       unsubscribeSafetySettings?.();
       unsubscribeAudioMappings?.();
+      unsubscribeSceneThemes?.();
       if (visibilityListenerAdded && handleVisibilityChange !== null) {
         document.removeEventListener('visibilitychange', handleVisibilityChange);
       }
