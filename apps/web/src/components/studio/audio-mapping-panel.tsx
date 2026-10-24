@@ -1,11 +1,11 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState, useSyncExternalStore } from 'react';
 import { readLatestAudioFrame } from '@/engine/audio/audio-frame-store';
 import { createScene, SCENE_OPTIONS, type SceneId } from '@/engine/scenes/scene-registry';
 import { getSelectedScene, subscribeToSceneSelection } from '@/engine/scenes/scene-selection-store';
 import {
-  addAudioMapping, getAudioMappingsForScene, initializeAudioMappings,
+  addAudioMapping, getAudioMappingsForScene, getDefaultAudioMappingsForScene, initializeAudioMappings,
   removeAudioMapping, resetAudioMappings, subscribeToAudioMappings, updateAudioMapping,
 } from '@/engine/mapping/mapping-store';
 import { AUDIO_MAPPING_SOURCES, type AudioMapping, type AudioMappingSource } from '@/engine/mapping/mapping-engine';
@@ -24,30 +24,26 @@ function newMappingId(): string {
 }
 
 export function AudioMappingPanel() {
-  const [selectedScene, setSelectedScene] = useState<SceneId>(() => getSelectedScene());
-  const [mappings, setMappings] = useState<readonly AudioMapping[]>(() => {
-    initializeAudioMappings();
-    return getAudioMappingsForScene(getSelectedScene());
-  });
+  const subscribeToScenes = useCallback((listener: () => void) => (
+    subscribeToSceneSelection(() => listener())
+  ), []);
+  const selectedScene = useSyncExternalStore(subscribeToScenes, getSelectedScene, () => 'radial-wave-disk' as SceneId);
+  const subscribeToCurrentMappings = useCallback((listener: () => void) => (
+    subscribeToAudioMappings((sceneId) => {
+      if (sceneId === selectedScene) listener();
+    })
+  ), [selectedScene]);
+  const mappings = useSyncExternalStore(
+    subscribeToCurrentMappings,
+    () => getAudioMappingsForScene(selectedScene),
+    () => getDefaultAudioMappingsForScene(selectedScene),
+  );
   const [levels, setLevels] = useState(EMPTY_LEVELS);
   const schema = useMemo(() => createScene(selectedScene).getParamSchema(), [selectedScene]);
   const sceneName = SCENE_OPTIONS.find((scene) => scene.id === selectedScene)?.name ?? 'Current scene';
 
   useEffect(() => {
-    const unsubscribeScene = subscribeToSceneSelection((sceneId) => {
-      setSelectedScene(sceneId);
-      setMappings(getAudioMappingsForScene(sceneId));
-    });
-    const unsubscribeMappings = subscribeToAudioMappings((sceneId) => {
-      if (sceneId === getSelectedScene()) setMappings(getAudioMappingsForScene(sceneId));
-    });
-    return () => {
-      unsubscribeScene();
-      unsubscribeMappings();
-    };
-  }, []);
-
-  useEffect(() => {
+    initializeAudioMappings();
     const interval = window.setInterval(() => {
       const frame = readLatestAudioFrame();
       if (frame === null) {
