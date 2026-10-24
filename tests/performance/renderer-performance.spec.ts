@@ -2,6 +2,21 @@ import { mkdir, writeFile } from 'node:fs/promises';
 import { resolve } from 'node:path';
 import { expect, test, type Page, type TestInfo } from '@playwright/test';
 
+function createFiveMinuteSilentMp3(): Buffer {
+  // MPEG-1 Layer III, 128 kbps, 44.1 kHz. This long fixture prevents a slow CI runner
+  // from reaching the end of the short demo track before the repeated scene-switch test finishes.
+  const frameLength = 417;
+  const frameCount = Math.ceil((300 * 44_100) / 1152);
+  const audio = Buffer.alloc(frameLength * frameCount);
+  for (let offset = 0; offset < audio.length; offset += frameLength) {
+    audio[offset] = 0xff;
+    audio[offset + 1] = 0xfb;
+    audio[offset + 2] = 0x90;
+    audio[offset + 3] = 0x64;
+  }
+  return audio;
+}
+
 const scenes = [
   { id: 'radial-wave-disk', name: 'Radial Wave Disk' },
   { id: 'particle-vortex', name: 'Particle Vortex' },
@@ -210,7 +225,13 @@ test('@quick-performance profiles FPS and long frames across all seven scenes', 
 
 test('@quick-performance retains audio continuity through 20 scene switches', async ({ page }, testInfo) => {
   await prepareStudio(page);
-  await page.getByRole('button', { name: 'Use demo track' }).click();
+  // Five minutes leaves enough playback headroom even when CI's software renderer is slow.
+  await page.locator('#audio-file-input').setInputFiles({
+    name: 'scene-switch-continuity.mp3',
+    mimeType: 'audio/mpeg',
+    buffer: createFiveMinuteSilentMp3(),
+  });
+  await expect(page.locator('.audio-time--duration')).toHaveText('05:00', { timeout: 10_000 });
   await page.getByRole('button', { name: 'Play audio' }).click();
   await expect(page.getByRole('button', { name: 'Pause audio' })).toBeVisible();
 
