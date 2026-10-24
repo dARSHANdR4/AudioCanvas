@@ -32,6 +32,7 @@
 | TC-14 | Camera Studio scroll & jump | Jump to XYZ stays inside the popup; scrolling reaches the end and returns to the top; fixed Reset remains reachable; page scroll position is unchanged |
 | TC-15 | Safety controls | Flash limiter and Reduced Motion change renderer state, affect the processed audio frame, and persist after reload |
 | TC-16 | Hidden-tab rendering | When the document is hidden, scene updates and GPU rendering are skipped; rendering resumes when visible without a large catch-up time step |
+| TC-17 | Per-scene camera profiles | Each scene restores its own camera pose, roll and object rotation; profiles persist after reload; resetting one scene does not reset another |
 
 ## 6.3 Roadmap (Milestones)
 
@@ -101,3 +102,10 @@ Node-based visual editor, custom GLSL snippets with sandboxing, additional scene
 - Theme choice is stored separately for each scene in localStorage. Reset restores Cyberpunk for the selected scene.
 - Unit tests validate preset palettes and per-scene selection; Playwright covers live application, scene isolation, reload persistence, and reset.
 - Custom colour pickers, post-processing effects, undo/redo, and cloud/shareable presets are intentionally deferred.
+
+
+## 6.10 Camera Studio — per-scene profile follow-up
+
+- Camera position, OrbitControls target/pan, up vector, roll and object X/Y/Z rotation persist independently for each visualization in browser localStorage.
+- Sensitivity and rotate/pan/zoom enable toggles remain global interaction preferences.
+- Camera Studio unit and Playwright checks validate scene isolation, reset scope, and reload persistence. Save/Share/Export integration remains deferred.
