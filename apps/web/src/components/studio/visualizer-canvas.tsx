@@ -22,7 +22,6 @@ import {
   type SafetySettings,
 } from '@/engine/scenes/safety-settings-store';
 import {
-  DEFAULT_SCENE_PARAMS,
   type QualityTier,
   type RenderContext,
   type Scene,
