@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useSyncExternalStore } from 'react';
 import { getSelectedScene, subscribeToSceneSelection } from '@/engine/scenes/scene-selection-store';
+import type { SceneId } from '@/engine/scenes/scene-registry';
 import {
   getDefaultSceneThemePresetId,
   getSceneThemePresetId,
@@ -16,7 +17,7 @@ export function ThemePanel() {
   const subscribeToScenes = useCallback((listener: () => void) => (
     subscribeToSceneSelection(() => listener())
   ), []);
-  const selectedScene = useSyncExternalStore(subscribeToScenes, getSelectedScene, () => 'radial-wave-disk');
+  const selectedScene = useSyncExternalStore(subscribeToScenes, getSelectedScene, () => 'radial-wave-disk' as SceneId);
 
   const subscribeToCurrentTheme = useCallback((listener: () => void) => (
     subscribeToSceneThemes((sceneId) => {
