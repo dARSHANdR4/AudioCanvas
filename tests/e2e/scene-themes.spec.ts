@@ -3,7 +3,11 @@ import { expect, test } from '@playwright/test';
 test('theme presets apply live, stay isolated per scene, and persist after reload', async ({ page }) => {
   await page.addInitScript(() => {
     try {
-      localStorage.removeItem('audiocanvas.scene-themes.v1');
+      // This runs on every navigation, including reloads. Clear old test data only once per tab.
+      if (sessionStorage.getItem('audiocanvas.theme-test-initialized') !== 'true') {
+        localStorage.removeItem('audiocanvas.scene-themes.v1');
+        sessionStorage.setItem('audiocanvas.theme-test-initialized', 'true');
+      }
       localStorage.setItem('audiocanvas.photosensitivity-acknowledged.v1', 'true');
     } catch {
       // Ignore opaque-origin storage during about:blank.
