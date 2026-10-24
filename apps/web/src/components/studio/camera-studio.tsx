@@ -1,17 +1,18 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState, useSyncExternalStore } from 'react';
 import { createPortal } from 'react-dom';
 import {
   dispatchCameraCommand,
   type CameraPreset,
   type CameraToggle,
-  type ObjectAxis,
 } from '@/engine/scenes/camera-controls-store';
 import {
-  getCameraPreferences,
-  getSceneCameraProfile,
-  initializeCameraStudioSettings,
+  getCameraPreferencesSnapshot,
+  getDefaultCameraPreferencesSnapshot,
+  getDefaultSceneCameraProfileSnapshot,
+  getSceneCameraProfileSnapshot,
+  subscribeToCameraStudioSettings,
   setCameraPreferences,
 } from '@/engine/scenes/camera-profile-store';
 import { getSelectedScene, subscribeToSceneSelection } from '@/engine/scenes/scene-selection-store';
@@ -48,32 +49,28 @@ export function CameraStudio() {
     right: 12,
     maxHeight: 600,
   });
-  const [roll, setRoll] = useState(0);
-  const [sensitivity, setSensitivity] = useState(1);
-  const [axes, setAxes] = useState<Record<ObjectAxis, number>>({ x: 0, y: 0, z: 0 });
-  const [enabled, setEnabled] = useState<Record<CameraToggle, boolean>>({
-    rotate: true,
-    pan: true,
-    zoom: true,
-  });
-  const [activeSceneId, setActiveSceneId] = useState<SceneId>('radial-wave-disk');
+  const subscribeToScenes = useCallback((listener: () => void) => (
+    subscribeToSceneSelection(() => listener())
+  ), []);
+  const activeSceneId = useSyncExternalStore(subscribeToScenes, getSelectedScene, () => 'radial-wave-disk' as SceneId);
+  const subscribeToCameraSettings = useCallback((listener: () => void) => (
+    subscribeToCameraStudioSettings(listener)
+  ), []);
+  const sceneProfile = useSyncExternalStore(
+    subscribeToCameraSettings,
+    () => getSceneCameraProfileSnapshot(activeSceneId),
+    getDefaultSceneCameraProfileSnapshot,
+  );
+  const preferences = useSyncExternalStore(
+    subscribeToCameraSettings,
+    getCameraPreferencesSnapshot,
+    getDefaultCameraPreferencesSnapshot,
+  );
+  const roll = sceneProfile.rollDegrees;
+  const axes = sceneProfile.objectRotationDegrees;
+  const sensitivity = preferences.sensitivity;
+  const enabled = preferences.enabled;
   const activeSceneName = SCENE_OPTIONS.find((scene) => scene.id === activeSceneId)?.name ?? 'Radial Wave Disk';
-
-  useEffect(() => {
-    initializeCameraStudioSettings();
-    const preferences = getCameraPreferences();
-    setSensitivity(preferences.sensitivity);
-    setEnabled(preferences.enabled);
-
-    const syncSceneProfile = (sceneId: SceneId) => {
-      const profile = getSceneCameraProfile(sceneId);
-      setActiveSceneId(sceneId);
-      setRoll(profile.rollDegrees);
-      setAxes(profile.objectRotationDegrees);
-    };
-    syncSceneProfile(getSelectedScene());
-    return subscribeToSceneSelection(syncSceneProfile);
-  }, []);
 
   useEffect(() => {
     if (!open) return;
@@ -117,15 +114,12 @@ export function CameraStudio() {
   }, [open]);
 
   const selectPreset = (preset: CameraPreset) => {
-    setRoll(0);
     dispatchCameraCommand({ type: 'roll', degrees: 0 });
     dispatchCameraCommand({ type: 'preset', preset });
   };
 
   const resetView = () => {
     // Reset only this visualization's view; global input preferences remain unchanged.
-    setRoll(0);
-    setAxes({ x: 0, y: 0, z: 0 });
     dispatchCameraCommand({ type: 'reset' });
   };
 
@@ -229,7 +223,6 @@ export function CameraStudio() {
                       checked={enabled[id]}
                       onChange={(event) => {
                         const nextEnabled = event.currentTarget.checked;
-                        setEnabled((current) => ({ ...current, [id]: nextEnabled }));
                         setCameraPreferences({ enabled: { [id]: nextEnabled } });
                         dispatchCameraCommand({
                           type: 'toggle',
@@ -260,7 +253,6 @@ export function CameraStudio() {
                 min="0.4"
                 onChange={(event) => {
                   const value = Number(event.currentTarget.value);
-                  setSensitivity(value);
                   setCameraPreferences({ sensitivity: value });
                   dispatchCameraCommand({ type: 'sensitivity', value });
                 }}
@@ -280,7 +272,6 @@ export function CameraStudio() {
                 min="-180"
                 onChange={(event) => {
                   const degrees = Number(event.currentTarget.value);
-                  setRoll(degrees);
                   dispatchCameraCommand({ type: 'roll', degrees });
                 }}
                 step="1"
@@ -310,7 +301,6 @@ export function CameraStudio() {
                     min="-180"
                     onChange={(event) => {
                       const degrees = Number(event.currentTarget.value);
-                      setAxes((current) => ({ ...current, [axis]: degrees }));
                       dispatchCameraCommand({ type: 'axis', axis, degrees });
                     }}
                     step="1"

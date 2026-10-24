@@ -132,6 +132,13 @@ function normalizePreferences(value: unknown, fallback: CameraPreferences): Came
 let profiles = createDefaultProfiles();
 let preferences = createDefaultPreferences();
 let initialized = false;
+const settingsListeners = new Set<() => void>();
+const DEFAULT_PROFILE_SNAPSHOT = createDefaultProfile();
+const DEFAULT_PREFERENCES_SNAPSHOT = createDefaultPreferences();
+
+function notifySettingsChanged(): void {
+  settingsListeners.forEach((listener) => listener());
+}
 
 function persist(): void {
   if (typeof window === 'undefined') return;
@@ -160,6 +167,7 @@ export function initializeCameraStudioSettings(): void {
     }
     profiles = nextProfiles;
     preferences = normalizePreferences(parsed.preferences, createDefaultPreferences());
+    notifySettingsChanged();
   } catch {
     // Malformed or unavailable local data must not prevent the Studio from opening.
   }
@@ -170,15 +178,39 @@ export function getSceneCameraProfile(sceneId: SceneId): SceneCameraProfile {
   return cloneProfile(profiles[sceneId] ?? createDefaultProfile());
 }
 
+/** Stable snapshot for React's useSyncExternalStore; callers should not mutate it. */
+export function getSceneCameraProfileSnapshot(sceneId: SceneId): SceneCameraProfile {
+  return profiles[sceneId] ?? DEFAULT_PROFILE_SNAPSHOT;
+}
+
+export function getCameraPreferencesSnapshot(): CameraPreferences {
+  return preferences;
+}
+
+export function getDefaultSceneCameraProfileSnapshot(): SceneCameraProfile {
+  return DEFAULT_PROFILE_SNAPSHOT;
+}
+
+export function getDefaultCameraPreferencesSnapshot(): CameraPreferences {
+  return DEFAULT_PREFERENCES_SNAPSHOT;
+}
+
+export function subscribeToCameraStudioSettings(listener: () => void): () => void {
+  settingsListeners.add(listener);
+  return () => { settingsListeners.delete(listener); };
+}
+
 /** Updates in-memory profile data; pass persistNow=false while OrbitControls is damping. */
 export function setSceneCameraProfile(
   sceneId: SceneId,
   profile: SceneCameraProfile,
   persistNow = true,
+  notifyChange = persistNow,
 ): void {
   initializeCameraStudioSettings();
   profiles = { ...profiles, [sceneId]: normalizeProfile(profile, createDefaultProfile()) };
   if (persistNow) persist();
+  if (notifyChange) notifySettingsChanged();
 }
 
 export function resetSceneCameraProfile(sceneId: SceneId): SceneCameraProfile {
@@ -200,6 +232,7 @@ export function setCameraPreferences(patch: CameraPreferencePatch): CameraPrefer
     enabled: { ...preferences.enabled, ...patch.enabled },
   }, preferences);
   persist();
+  notifySettingsChanged();
   return clonePreferences(preferences);
 }
 

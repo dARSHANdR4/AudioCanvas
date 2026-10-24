@@ -121,7 +121,7 @@ export function VisualizerCanvas() {
           z: THREE.MathUtils.radToDeg(renderStage.rotation.z),
         },
       };
-      setSceneCameraProfile(sceneId, profile, persistNow);
+      setSceneCameraProfile(sceneId, profile, persistNow, persistNow);
     };
 
     const scheduleCameraProfileSave = () => {
