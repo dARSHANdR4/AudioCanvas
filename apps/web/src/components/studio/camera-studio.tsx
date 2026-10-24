@@ -1,13 +1,22 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState, useSyncExternalStore } from 'react';
 import { createPortal } from 'react-dom';
 import {
   dispatchCameraCommand,
   type CameraPreset,
   type CameraToggle,
-  type ObjectAxis,
 } from '@/engine/scenes/camera-controls-store';
+import {
+  getCameraPreferencesSnapshot,
+  getDefaultCameraPreferencesSnapshot,
+  getDefaultSceneCameraProfileSnapshot,
+  getSceneCameraProfileSnapshot,
+  subscribeToCameraStudioSettings,
+  setCameraPreferences,
+} from '@/engine/scenes/camera-profile-store';
+import { getSelectedScene, subscribeToSceneSelection } from '@/engine/scenes/scene-selection-store';
+import { SCENE_OPTIONS, type SceneId } from '@/engine/scenes/scene-registry';
 import styles from './camera-studio.module.css';
 
 const PRESETS: { id: CameraPreset; label: string }[] = [
@@ -40,14 +49,28 @@ export function CameraStudio() {
     right: 12,
     maxHeight: 600,
   });
-  const [roll, setRoll] = useState(0);
-  const [sensitivity, setSensitivity] = useState(1);
-  const [axes, setAxes] = useState<Record<ObjectAxis, number>>({ x: 0, y: 0, z: 0 });
-  const [enabled, setEnabled] = useState<Record<CameraToggle, boolean>>({
-    rotate: true,
-    pan: true,
-    zoom: true,
-  });
+  const subscribeToScenes = useCallback((listener: () => void) => (
+    subscribeToSceneSelection(() => listener())
+  ), []);
+  const activeSceneId = useSyncExternalStore(subscribeToScenes, getSelectedScene, () => 'radial-wave-disk' as SceneId);
+  const subscribeToCameraSettings = useCallback((listener: () => void) => (
+    subscribeToCameraStudioSettings(listener)
+  ), []);
+  const sceneProfile = useSyncExternalStore(
+    subscribeToCameraSettings,
+    () => getSceneCameraProfileSnapshot(activeSceneId),
+    getDefaultSceneCameraProfileSnapshot,
+  );
+  const preferences = useSyncExternalStore(
+    subscribeToCameraSettings,
+    getCameraPreferencesSnapshot,
+    getDefaultCameraPreferencesSnapshot,
+  );
+  const roll = sceneProfile.rollDegrees;
+  const axes = sceneProfile.objectRotationDegrees;
+  const sensitivity = preferences.sensitivity;
+  const enabled = preferences.enabled;
+  const activeSceneName = SCENE_OPTIONS.find((scene) => scene.id === activeSceneId)?.name ?? 'Radial Wave Disk';
 
   useEffect(() => {
     if (!open) return;
@@ -91,25 +114,13 @@ export function CameraStudio() {
   }, [open]);
 
   const selectPreset = (preset: CameraPreset) => {
-    setRoll(0);
     dispatchCameraCommand({ type: 'roll', degrees: 0 });
     dispatchCameraCommand({ type: 'preset', preset });
   };
 
   const resetView = () => {
-    setRoll(0);
-    setSensitivity(1);
-    setAxes({ x: 0, y: 0, z: 0 });
-    setEnabled({ rotate: true, pan: true, zoom: true });
+    // Reset only this visualization's view; global input preferences remain unchanged.
     dispatchCameraCommand({ type: 'reset' });
-    dispatchCameraCommand({ type: 'roll', degrees: 0 });
-    dispatchCameraCommand({ type: 'sensitivity', value: 1 });
-    (['x', 'y', 'z'] as const).forEach((axis) => {
-      dispatchCameraCommand({ type: 'axis', axis, degrees: 0 });
-    });
-    TOGGLES.forEach(({ id }) => {
-      dispatchCameraCommand({ type: 'toggle', control: id, enabled: true });
-    });
   };
 
   const jumpToAxes = () => {
@@ -156,7 +167,7 @@ export function CameraStudio() {
         >
           <header className={styles.header}>
             <div>
-              <p className={styles.eyebrow}>VIEWPORT / NAVIGATION</p>
+              <p className={styles.eyebrow}>VIEWPORT / {activeSceneName.toUpperCase()}</p>
               <h2>Free camera</h2>
             </div>
             <div className={styles.headerActions}>
@@ -177,6 +188,7 @@ export function CameraStudio() {
           <p className={styles.hint}>
             Drag to orbit · Scroll to zoom · Use XYZ axes for object rotation
           </p>
+          <p className={styles.profileNote}>This camera profile is saved for {activeSceneName} only.</p>
 
           <div className={styles.scrollBody} data-testid="camera-studio-scroll-body" ref={scrollBodyRef}>
             <div className={styles.section}>
@@ -211,7 +223,7 @@ export function CameraStudio() {
                       checked={enabled[id]}
                       onChange={(event) => {
                         const nextEnabled = event.currentTarget.checked;
-                        setEnabled((current) => ({ ...current, [id]: nextEnabled }));
+                        setCameraPreferences({ enabled: { [id]: nextEnabled } });
                         dispatchCameraCommand({
                           type: 'toggle',
                           control: id,
@@ -241,7 +253,7 @@ export function CameraStudio() {
                 min="0.4"
                 onChange={(event) => {
                   const value = Number(event.currentTarget.value);
-                  setSensitivity(value);
+                  setCameraPreferences({ sensitivity: value });
                   dispatchCameraCommand({ type: 'sensitivity', value });
                 }}
                 step="0.1"
@@ -260,7 +272,6 @@ export function CameraStudio() {
                 min="-180"
                 onChange={(event) => {
                   const degrees = Number(event.currentTarget.value);
-                  setRoll(degrees);
                   dispatchCameraCommand({ type: 'roll', degrees });
                 }}
                 step="1"
@@ -290,7 +301,6 @@ export function CameraStudio() {
                     min="-180"
                     onChange={(event) => {
                       const degrees = Number(event.currentTarget.value);
-                      setAxes((current) => ({ ...current, [axis]: degrees }));
                       dispatchCameraCommand({ type: 'axis', axis, degrees });
                     }}
                     step="1"

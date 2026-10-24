@@ -82,3 +82,92 @@ test('Camera Studio provides camera presets, roll and a front-view reset', async
   await expect(canvas).toHaveAttribute('data-object-axis-z', '0');
   await expect(canvas).toHaveAttribute('data-scene', initialScene ?? '');
 });
+
+
+test('camera profiles stay isolated per scene and persist across reloads', async ({ page }) => {
+  await page.addInitScript(() => {
+    try {
+      if (sessionStorage.getItem('audiocanvas.camera-test-initialized') !== 'true') {
+        localStorage.removeItem('audiocanvas.camera-studio.v1');
+        sessionStorage.setItem('audiocanvas.camera-test-initialized', 'true');
+      }
+      localStorage.setItem('audiocanvas.photosensitivity-acknowledged.v1', 'true');
+    } catch {
+      // Ignore opaque-origin storage before the first navigation.
+    }
+  });
+
+  await page.goto('/studio');
+  const canvas = page.locator('.visualizer-canvas');
+  await expect(canvas).toHaveAttribute('data-render-status', 'ready');
+
+  await page.getByRole('button', { name: 'Camera Studio' }).click();
+  const panel = page.getByRole('dialog', { name: 'Camera Studio controls' });
+  await expect(panel).toBeVisible();
+
+  await panel.getByRole('button', { name: 'Side view' }).click();
+  await expect(canvas).toHaveAttribute('data-camera-preset', 'side');
+  const xAxis = panel.getByRole('slider', { name: 'Object X axis' });
+  await xAxis.focus();
+  await page.keyboard.press('End');
+  await expect(canvas).toHaveAttribute('data-object-axis-x', '180');
+  const roll = panel.getByRole('slider', { name: 'Camera roll' });
+  await roll.focus();
+  await page.keyboard.press('End');
+  await expect(canvas).toHaveAttribute('data-camera-roll', '180');
+
+  await page.getByRole('button', { name: 'Switch to Particle Vortex' }).click();
+  await expect(canvas).toHaveAttribute('data-scene', 'particle-vortex');
+  await expect(canvas).toHaveAttribute('data-camera-preset', 'front');
+  await expect(canvas).toHaveAttribute('data-camera-roll', '0');
+  await expect(canvas).toHaveAttribute('data-object-axis-x', '0');
+
+  await panel.getByRole('button', { name: 'Top view' }).click();
+  await expect(canvas).toHaveAttribute('data-camera-preset', 'top');
+  const zAxis = panel.getByRole('slider', { name: 'Object Z axis' });
+  await zAxis.focus();
+  await page.keyboard.press('End');
+  await expect(canvas).toHaveAttribute('data-object-axis-z', '180');
+
+  await page.getByRole('button', { name: 'Switch to Radial Wave Disk' }).click();
+  await expect(canvas).toHaveAttribute('data-camera-preset', 'side');
+  await expect(canvas).toHaveAttribute('data-camera-roll', '180');
+  await expect(canvas).toHaveAttribute('data-object-axis-x', '180');
+  await expect(canvas).toHaveAttribute('data-object-axis-z', '0');
+
+  const savedProfiles = await page.evaluate(() => {
+    const raw = localStorage.getItem('audiocanvas.camera-studio.v1');
+    return raw ? JSON.parse(raw) as {
+      profiles: Record<string, { preset: string; rollDegrees: number; objectRotationDegrees: { x: number; z: number } }>;
+    } : null;
+  });
+  expect(savedProfiles?.profiles['radial-wave-disk']).toMatchObject({
+    preset: 'side',
+    rollDegrees: 180,
+    objectRotationDegrees: { x: 180, z: 0 },
+  });
+  expect(savedProfiles?.profiles['particle-vortex']).toMatchObject({
+    preset: 'top',
+    objectRotationDegrees: { z: 180 },
+  });
+
+  await page.reload();
+  await expect(page.locator('.visualizer-canvas')).toHaveAttribute('data-render-status', 'ready');
+  await expect(page.locator('.visualizer-canvas')).toHaveAttribute('data-camera-preset', 'side');
+  await expect(page.locator('.visualizer-canvas')).toHaveAttribute('data-camera-roll', '180');
+  await expect(page.locator('.visualizer-canvas')).toHaveAttribute('data-object-axis-x', '180');
+
+  await page.getByRole('button', { name: 'Camera Studio' }).click();
+  const reopenedPanel = page.getByRole('dialog', { name: 'Camera Studio controls' });
+  await reopenedPanel.getByRole('button', { name: 'Reset view' }).click();
+  await expect(page.locator('.visualizer-canvas')).toHaveAttribute('data-camera-preset', 'front');
+  await expect(page.locator('.visualizer-canvas')).toHaveAttribute('data-camera-roll', '0');
+  await expect(page.locator('.visualizer-canvas')).toHaveAttribute('data-object-axis-x', '0');
+
+  const profilesAfterReset = await page.evaluate(() => {
+    const raw = localStorage.getItem('audiocanvas.camera-studio.v1');
+    return raw ? JSON.parse(raw) as { profiles: Record<string, { preset: string; objectRotationDegrees: { z: number } }> } : null;
+  });
+  expect(profilesAfterReset?.profiles['radial-wave-disk']).toMatchObject({ preset: 'front', objectRotationDegrees: { z: 0 } });
+  expect(profilesAfterReset?.profiles['particle-vortex']).toMatchObject({ preset: 'top', objectRotationDegrees: { z: 180 } });
+});

@@ -11,6 +11,14 @@ import { createScene, SCENE_OPTIONS, type SceneId } from '@/engine/scenes/scene-
 import { initialQualityForConcurrency } from '@/engine/scenes/render-quality';
 import { getSelectedScene, subscribeToSceneSelection } from '@/engine/scenes/scene-selection-store';
 import {
+  getCameraPreferences,
+  getSceneCameraProfile,
+  initializeCameraStudioSettings,
+  persistCameraStudioSettings,
+  setSceneCameraProfile,
+  type SceneCameraProfile,
+} from '@/engine/scenes/camera-profile-store';
+import {
   subscribeToCameraCommands,
   type CameraCommand,
   type CameraPreset,
@@ -80,6 +88,9 @@ export function VisualizerCanvas() {
     let cameraControls: OrbitControls | null = null;
     let renderStage: THREE.Scene | null = null;
     let cameraRollDegrees = 0;
+    let activeCameraPreset: CameraPreset | 'custom' = 'front';
+    let suppressCameraProfileSync = false;
+    let profileSaveTimer: number | null = null;
     let safetySettings: SafetySettings = getSafetySettings();
     let visibilityListenerAdded = false;
     let handleVisibilityChange: (() => void) | null = null;
@@ -87,6 +98,99 @@ export function VisualizerCanvas() {
       IDLE_AUDIO_FRAME.spectrum.length,
       IDLE_AUDIO_FRAME.waveform.length,
     );
+
+    const captureCameraProfile = (sceneId: SceneId, persistNow: boolean) => {
+      if (activeSceneCamera === null || cameraControls === null || renderStage === null) return;
+      const profile: SceneCameraProfile = {
+        preset: activeCameraPreset,
+        position: {
+          x: activeSceneCamera.position.x,
+          y: activeSceneCamera.position.y,
+          z: activeSceneCamera.position.z,
+        },
+        target: {
+          x: cameraControls.target.x,
+          y: cameraControls.target.y,
+          z: cameraControls.target.z,
+        },
+        up: { x: activeSceneCamera.up.x, y: activeSceneCamera.up.y, z: activeSceneCamera.up.z },
+        rollDegrees: cameraRollDegrees,
+        objectRotationDegrees: {
+          x: THREE.MathUtils.radToDeg(renderStage.rotation.x),
+          y: THREE.MathUtils.radToDeg(renderStage.rotation.y),
+          z: THREE.MathUtils.radToDeg(renderStage.rotation.z),
+        },
+      };
+      setSceneCameraProfile(sceneId, profile, persistNow, persistNow);
+    };
+
+    const scheduleCameraProfileSave = () => {
+      if (suppressCameraProfileSync) return;
+      const sceneId = host.dataset.scene as SceneId | undefined;
+      if (sceneId === undefined) return;
+      captureCameraProfile(sceneId, false);
+      if (profileSaveTimer !== null) window.clearTimeout(profileSaveTimer);
+      profileSaveTimer = window.setTimeout(() => {
+        profileSaveTimer = null;
+        persistCameraStudioSettings();
+      }, 180);
+    };
+
+    const handleCameraControlsStart = () => {
+      if (suppressCameraProfileSync) return;
+      activeCameraPreset = 'custom';
+      host.dataset.cameraPreset = 'custom';
+    };
+
+    const handleCameraControlsEnd = () => {
+      if (suppressCameraProfileSync) return;
+      const sceneId = host.dataset.scene as SceneId | undefined;
+      if (sceneId === undefined) return;
+      if (profileSaveTimer !== null) {
+        window.clearTimeout(profileSaveTimer);
+        profileSaveTimer = null;
+      }
+      captureCameraProfile(sceneId, false);
+      persistCameraStudioSettings();
+    };
+
+    const saveCurrentCameraProfile = () => {
+      if (profileSaveTimer !== null) {
+        window.clearTimeout(profileSaveTimer);
+        profileSaveTimer = null;
+      }
+      const sceneId = host.dataset.scene as SceneId | undefined;
+      if (sceneId !== undefined) captureCameraProfile(sceneId, false);
+      persistCameraStudioSettings();
+    };
+
+    const restoreCameraProfile = (sceneId: SceneId) => {
+      if (activeSceneCamera === null || cameraControls === null || renderStage === null) return;
+      const profile = getSceneCameraProfile(sceneId);
+      suppressCameraProfileSync = true;
+      try {
+        cameraControls.reset();
+        activeSceneCamera.up.set(profile.up.x, profile.up.y, profile.up.z);
+        activeSceneCamera.position.set(profile.position.x, profile.position.y, profile.position.z);
+        cameraControls.target.set(profile.target.x, profile.target.y, profile.target.z);
+        cameraControls.update();
+        cameraControls.saveState();
+        activeCameraPreset = profile.preset;
+        cameraRollDegrees = profile.rollDegrees;
+        renderStage.rotation.set(
+          THREE.MathUtils.degToRad(profile.objectRotationDegrees.x),
+          THREE.MathUtils.degToRad(profile.objectRotationDegrees.y),
+          THREE.MathUtils.degToRad(profile.objectRotationDegrees.z),
+        );
+        host.dataset.cameraPreset = profile.preset;
+        host.dataset.cameraRoll = String(profile.rollDegrees);
+        host.dataset.objectAxisX = String(profile.objectRotationDegrees.x);
+        host.dataset.objectAxisY = String(profile.objectRotationDegrees.y);
+        host.dataset.objectAxisZ = String(profile.objectRotationDegrees.z);
+      } finally {
+        suppressCameraProfileSync = false;
+      }
+    };
 
     const handleSafetySettingsChange = (nextSettings: SafetySettings) => {
       safetySettings = nextSettings;
@@ -109,34 +213,40 @@ export function VisualizerCanvas() {
     const applyCameraPreset = (preset: CameraPreset) => {
       if (activeSceneCamera === null || cameraControls === null) return;
 
-      cameraRollDegrees = 0;
-      activeSceneCamera.up.set(0, 1, 0);
-      cameraControls.reset();
+      suppressCameraProfileSync = true;
+      try {
+        cameraRollDegrees = 0;
+        activeSceneCamera.up.set(0, 1, 0);
+        cameraControls.reset();
 
-      switch (preset) {
-        case 'front':
-          activeSceneCamera.position.set(0, 0, 10.3);
-          break;
-        case 'side':
-          activeSceneCamera.position.set(10.3, 0, 0);
-          break;
-        case 'top':
-          activeSceneCamera.position.set(0, 10.3, 0);
-          activeSceneCamera.up.set(0, 0, -1);
-          break;
-        case 'low-angle':
-          activeSceneCamera.position.set(0, -3.1, 10.3);
-          break;
-        case 'cinematic':
-          activeSceneCamera.position.set(7, 4.2, 10);
-          break;
+        switch (preset) {
+          case 'front':
+            activeSceneCamera.position.set(0, 0, 10.3);
+            break;
+          case 'side':
+            activeSceneCamera.position.set(10.3, 0, 0);
+            break;
+          case 'top':
+            activeSceneCamera.position.set(0, 10.3, 0);
+            activeSceneCamera.up.set(0, 0, -1);
+            break;
+          case 'low-angle':
+            activeSceneCamera.position.set(0, -3.1, 10.3);
+            break;
+          case 'cinematic':
+            activeSceneCamera.position.set(7, 4.2, 10);
+            break;
+        }
+
+        cameraControls.target.set(0, 0, 0);
+        cameraControls.update();
+        cameraControls.saveState();
+        activeCameraPreset = preset;
+        host.dataset.cameraPreset = preset;
+        host.dataset.cameraRoll = '0';
+      } finally {
+        suppressCameraProfileSync = false;
       }
-
-      cameraControls.target.set(0, 0, 0);
-      cameraControls.update();
-      cameraControls.saveState();
-      host.dataset.cameraPreset = preset;
-      host.dataset.cameraRoll = '0';
     };
 
     const handleCameraCommand = (command: CameraCommand) => {
@@ -145,6 +255,7 @@ export function VisualizerCanvas() {
       switch (command.type) {
         case 'preset':
           applyCameraPreset(command.preset);
+          captureCameraProfile(getSelectedScene(), true);
           break;
         case 'reset':
           applyCameraPreset('front');
@@ -152,10 +263,12 @@ export function VisualizerCanvas() {
           host.dataset.objectAxisX = '0';
           host.dataset.objectAxisY = '0';
           host.dataset.objectAxisZ = '0';
+          captureCameraProfile(getSelectedScene(), true);
           break;
         case 'roll':
           cameraRollDegrees = THREE.MathUtils.clamp(command.degrees, -180, 180);
           host.dataset.cameraRoll = String(cameraRollDegrees);
+          captureCameraProfile(getSelectedScene(), true);
           break;
         case 'axis': {
           const degrees = THREE.MathUtils.clamp(command.degrees, -180, 180);
@@ -168,6 +281,7 @@ export function VisualizerCanvas() {
           if (command.axis === 'x') host.dataset.objectAxisX = String(degrees);
           if (command.axis === 'y') host.dataset.objectAxisY = String(degrees);
           if (command.axis === 'z') host.dataset.objectAxisZ = String(degrees);
+          captureCameraProfile(getSelectedScene(), true);
           break;
         }
         case 'sensitivity': {
@@ -195,6 +309,16 @@ export function VisualizerCanvas() {
       if (renderContext === null) return;
       const metadata = SCENE_OPTIONS.find((option) => option.id === sceneId);
       if (metadata === undefined) return;
+
+      const previousSceneId = host.dataset.scene as SceneId | undefined;
+      if (previousSceneId !== undefined && previousSceneId !== sceneId) {
+        if (profileSaveTimer !== null) {
+          window.clearTimeout(profileSaveTimer);
+          profileSaveTimer = null;
+        }
+        captureCameraProfile(previousSceneId, true);
+      }
+
       activeScene?.dispose();
       activeScene = null;
 
@@ -209,6 +333,7 @@ export function VisualizerCanvas() {
         host.dataset.scene = sceneId;
         host.dataset.theme = theme.id;
         host.dataset.quality = quality;
+        restoreCameraProfile(sceneId);
         host.setAttribute('aria-label', `Audio-reactive ${metadata.name.toLowerCase()}`);
         host.closest('.studio-shell')?.querySelector<HTMLElement>('[data-scene-label]')?.replaceChildren(
           document.createTextNode(metadata.name.toUpperCase()),
@@ -223,6 +348,7 @@ export function VisualizerCanvas() {
     };
 
     try {
+      initializeCameraStudioSettings();
       initializeSafetySettings();
       initializeAudioMappings();
       initializeSceneThemes();
@@ -279,10 +405,20 @@ export function VisualizerCanvas() {
       cameraControls.maxDistance = 28;
       cameraControls.zoomToCursor = true;
       cameraControls.target.set(0, 0, 0);
+      const cameraPreferences = getCameraPreferences();
+      cameraControls.rotateSpeed = cameraPreferences.sensitivity;
+      cameraControls.zoomSpeed = cameraPreferences.sensitivity;
+      cameraControls.panSpeed = cameraPreferences.sensitivity;
+      cameraControls.enableRotate = cameraPreferences.enabled.rotate;
+      cameraControls.enablePan = cameraPreferences.enabled.pan;
+      cameraControls.enableZoom = cameraPreferences.enabled.zoom;
       cameraControls.update();
       cameraControls.saveState();
       host.dataset.cameraPreset = 'front';
       host.dataset.cameraRoll = '0';
+      cameraControls.addEventListener('change', scheduleCameraProfileSave);
+      cameraControls.addEventListener('start', handleCameraControlsStart);
+      cameraControls.addEventListener('end', handleCameraControlsEnd);
       unsubscribeCameraCommands = subscribeToCameraCommands(handleCameraCommand);
 
       handleResize();
@@ -358,6 +494,10 @@ export function VisualizerCanvas() {
       animationFrame = window.requestAnimationFrame(renderLoop);
     } catch {
       // Scene initialization errors are handled inside switchScene; this catch covers renderer setup.
+      saveCurrentCameraProfile();
+      cameraControls?.removeEventListener('change', scheduleCameraProfileSave);
+      cameraControls?.removeEventListener('start', handleCameraControlsStart);
+      cameraControls?.removeEventListener('end', handleCameraControlsEnd);
       unsubscribeCameraCommands?.();
       unsubscribeSafetySettings?.();
       unsubscribeAudioMappings?.();
@@ -374,6 +514,10 @@ export function VisualizerCanvas() {
 
     return () => {
       window.cancelAnimationFrame(animationFrame);
+      saveCurrentCameraProfile();
+      cameraControls?.removeEventListener('change', scheduleCameraProfileSave);
+      cameraControls?.removeEventListener('start', handleCameraControlsStart);
+      cameraControls?.removeEventListener('end', handleCameraControlsEnd);
       unsubscribeSceneSelection?.();
       unsubscribeCameraCommands?.();
       unsubscribeSafetySettings?.();
