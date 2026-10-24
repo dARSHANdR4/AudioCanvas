@@ -27,7 +27,7 @@ export function ThemePanel() {
   const activePresetId = useSyncExternalStore(
     subscribeToCurrentTheme,
     () => getSceneThemePresetId(selectedScene),
-    () => getDefaultSceneThemePresetId(selectedScene),
+    () => getDefaultSceneThemePresetId(),
   );
 
   useEffect(() => {
