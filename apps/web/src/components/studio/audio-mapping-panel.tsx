@@ -25,16 +25,15 @@ function newMappingId(): string {
 
 export function AudioMappingPanel() {
   const [selectedScene, setSelectedScene] = useState<SceneId>(() => getSelectedScene());
-  const [mappings, setMappings] = useState<readonly AudioMapping[]>(() => getAudioMappingsForScene(getSelectedScene()));
+  const [mappings, setMappings] = useState<readonly AudioMapping[]>(() => {
+    initializeAudioMappings();
+    return getAudioMappingsForScene(getSelectedScene());
+  });
   const [levels, setLevels] = useState(EMPTY_LEVELS);
   const schema = useMemo(() => createScene(selectedScene).getParamSchema(), [selectedScene]);
   const sceneName = SCENE_OPTIONS.find((scene) => scene.id === selectedScene)?.name ?? 'Current scene';
 
   useEffect(() => {
-    initializeAudioMappings();
-    setSelectedScene(getSelectedScene());
-    setMappings(getAudioMappingsForScene(getSelectedScene()));
-
     const unsubscribeScene = subscribeToSceneSelection((sceneId) => {
       setSelectedScene(sceneId);
       setMappings(getAudioMappingsForScene(sceneId));
