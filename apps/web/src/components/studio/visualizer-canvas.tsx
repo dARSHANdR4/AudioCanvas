@@ -4,6 +4,8 @@ import { useEffect, useRef } from 'react';
 import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { readLatestAudioFrame } from '@/engine/audio/audio-frame-store';
+import { evaluateAudioMappings, type MappingSmoothingState } from '@/engine/mapping/mapping-engine';
+import { getAudioMappingsForScene, initializeAudioMappings, subscribeToAudioMappings } from '@/engine/mapping/mapping-store';
 import { createScene, SCENE_OPTIONS, type SceneId } from '@/engine/scenes/scene-registry';
 import { initialQualityForConcurrency } from '@/engine/scenes/render-quality';
 import { getSelectedScene, subscribeToSceneSelection } from '@/engine/scenes/scene-selection-store';
@@ -71,6 +73,8 @@ export function VisualizerCanvas() {
     let unsubscribeSceneSelection: (() => void) | null = null;
     let unsubscribeCameraCommands: (() => void) | null = null;
     let unsubscribeSafetySettings: (() => void) | null = null;
+    let unsubscribeAudioMappings: (() => void) | null = null;
+    const mappingSmoothingState: MappingSmoothingState = new Map();
     let activeSceneCamera: THREE.PerspectiveCamera | null = null;
     let cameraControls: OrbitControls | null = null;
     let renderStage: THREE.Scene | null = null;
@@ -180,6 +184,12 @@ export function VisualizerCanvas() {
       }
     };
 
+    const syncMappingDiagnostics = (sceneId: SceneId) => {
+      const enabledMappings = getAudioMappingsForScene(sceneId).filter((item) => item.enabled);
+      host.dataset.mappingCount = String(enabledMappings.length);
+      host.dataset.mappingTargets = enabledMappings.map((item) => item.target).join(',');
+    };
+
     const switchScene = (sceneId: SceneId) => {
       if (renderContext === null) return;
       const metadata = SCENE_OPTIONS.find((option) => option.id === sceneId);
@@ -192,6 +202,8 @@ export function VisualizerCanvas() {
         nextScene.init(renderContext, { quality, reducedMotion: safetySettings.reducedMotion });
         nextScene.setReducedMotion?.(safetySettings.reducedMotion);
         activeScene = nextScene;
+        mappingSmoothingState.clear();
+        syncMappingDiagnostics(sceneId);
         host.dataset.scene = sceneId;
         host.dataset.quality = quality;
         host.setAttribute('aria-label', `Audio-reactive ${metadata.name.toLowerCase()}`);
@@ -209,6 +221,10 @@ export function VisualizerCanvas() {
 
     try {
       initializeSafetySettings();
+      initializeAudioMappings();
+      unsubscribeAudioMappings = subscribeToAudioMappings((sceneId) => {
+        if (sceneId === getSelectedScene()) syncMappingDiagnostics(sceneId);
+      });
       safetySettings = getSafetySettings();
       host.dataset.safetyFlashLimiter = String(safetySettings.flashLimiter);
       host.dataset.safetyReducedMotion = String(safetySettings.reducedMotion);
@@ -290,7 +306,9 @@ export function VisualizerCanvas() {
           const sourceFrame = readLatestAudioFrame() ?? IDLE_AUDIO_FRAME;
           const safeFrame = safetyFrameProcessor.process(sourceFrame, dt, safetySettings);
           const visualDt = safetySettings.reducedMotion ? dt * 0.55 : dt;
-          activeScene.update(safeFrame, DEFAULT_SCENE_PARAMS, visualDt);
+          const mappings = getAudioMappingsForScene(getSelectedScene());
+          const params = evaluateAudioMappings(safeFrame, mappings, activeScene.getParamSchema(), visualDt, mappingSmoothingState);
+          activeScene.update(safeFrame, params, visualDt);
           activeScene.render();
         }
 
@@ -331,6 +349,7 @@ export function VisualizerCanvas() {
       // Scene initialization errors are handled inside switchScene; this catch covers renderer setup.
       unsubscribeCameraCommands?.();
       unsubscribeSafetySettings?.();
+      unsubscribeAudioMappings?.();
       if (visibilityListenerAdded && handleVisibilityChange !== null) {
         document.removeEventListener('visibilitychange', handleVisibilityChange);
       }
@@ -346,6 +365,7 @@ export function VisualizerCanvas() {
       unsubscribeSceneSelection?.();
       unsubscribeCameraCommands?.();
       unsubscribeSafetySettings?.();
+      unsubscribeAudioMappings?.();
       if (visibilityListenerAdded && handleVisibilityChange !== null) {
         document.removeEventListener('visibilitychange', handleVisibilityChange);
       }

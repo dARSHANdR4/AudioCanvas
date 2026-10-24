@@ -5,6 +5,7 @@ import { CameraStudio } from './camera-studio';
 import { AudioWorkbench } from './audio-workbench';
 import { SceneSelector } from './scene-selector';
 import { SafetyControls } from './safety-controls';
+import { AudioMappingPanel } from './audio-mapping-panel';
 
 export function StudioShell() {
   return (
@@ -52,7 +53,7 @@ export function StudioShell() {
               <p className="eyebrow">CANVAS VIEWPORT</p>
               <h1>Your sound, reimagined.</h1>
             </div>
-            <span className="state-pill"><span className="status-dot" /> M2 · VISUAL LIBRARY</span>
+            <span className="state-pill"><span className="status-dot" /> M3 · AUDIO MAPPING</span>
           </div>
           <div className="stage-wrap">
             <VisualizerCanvas />
@@ -72,33 +73,11 @@ export function StudioShell() {
             <span className="inspector-tab">Effects</span>
             <span className="inspector-tab">Audio</span>
           </div>
-          <section className="inspector-section">
-            <div className="inspector-title-row">
-              <div><span className="eyebrow">02 / RESPONSE</span><h2>Audio mapping</h2></div>
-              <span className="muted-badge">M3</span>
-            </div>
-            <p className="inspector-copy">Connect each part of your sound to a visual parameter. Mapping controls activate in M3.</p>
-            <div className="mapping-list">
-              {[
-                { source: 'BASS', target: 'Mesh scale', color: 'cyan', percent: '72%' },
-                { source: 'MID', target: 'Rotation speed', color: 'purple', percent: '48%' },
-                { source: 'TREBLE', target: 'Bloom intensity', color: 'pink', percent: '64%' },
-              ].map((mapping) => (
-                <div className="mapping-card" key={mapping.source}>
-                  <div className="mapping-card__header"><span className={`mapping-source mapping-source--${mapping.color}`}>{mapping.source}</span><span className="mapping-ellipsis">•••</span></div>
-                  <div className="mapping-arrow" aria-hidden="true">↓</div>
-                  <div className="mapping-target">{mapping.target}</div>
-                  <div aria-hidden="true" className="mapping-meter"><span className={`mapping-meter__fill mapping-meter__fill--${mapping.color}`} style={{ width: mapping.percent }} /></div>
-                  <div className="mapping-card__footer"><span>INTENSITY</span><span>{mapping.percent}</span></div>
-                </div>
-              ))}
-            </div>
-            <button className="button button--dashed button--full" disabled type="button">＋ Add mapping <span>Available in M3</span></button>
-          </section>
+          <AudioMappingPanel />
           <SafetyControls placement="desktop" />
         </aside>
       </div>
-      <footer className="studio-statusbar"><span><span className="status-dot" /> M2 · VISUAL LIBRARY PREVIEW</span><span>60 FPS TARGET</span><span>LOCAL-FIRST BY DESIGN</span><Link href="/legal/photosensitivity">Photosensitivity notice</Link></footer>
+      <footer className="studio-statusbar"><span><span className="status-dot" /> M3 · MAPPING MVP</span><span>60 FPS TARGET</span><span>LOCAL-FIRST BY DESIGN</span><Link href="/legal/photosensitivity">Photosensitivity notice</Link></footer>
     </main>
   );
 }

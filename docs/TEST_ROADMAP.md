@@ -40,7 +40,7 @@
 | M0 — Setup (week 1) | Repo, CI, design tokens, shell UI | Pipeline green; shell deployed |
 | M1 — Audio core (weeks 2–3) | Upload, mic, analyser, bands, timeline | ✅ TC-01 to TC-05 pass in CI; live browser smoke test passed |
 | M2 — Render core (weeks 3–5) | Three.js renderer, Scene interface, Radial Disk, Vortex, Tunnel, scene switching | Seven scene styles and switching tests implemented; quick FPS/long-frame, 20-switch audio continuity, and startup quality-tier checks run in CI; a 30-minute browser soak can run weekly or manually. Reference-device 60 FPS and actual GPU-VRAM profiling still require device-level verification |
-| M3 — Customization (weeks 5–7) | Mapping panel, themes, post-FX, undo/redo, keyboard shortcuts | TC-06, TC-07 pass |
+| M3 — Customization (weeks 5–7) | Audio-to-visual mappings MVP; themes, post-FX, undo/redo and keyboard shortcuts follow | Mapping engine unit tests and mapping-panel Playwright checks cover the MVP; TC-07 mapping response is covered by the evaluator |
 | M4 — VJ and Presets (weeks 7–9) | Fullscreen mode, local presets, URL sharing | TC-11 pass |
 | M5 — Export (weeks 9–12) | Offline analysis, encoder pipeline, export UI | TC-08 to TC-10 pass |
 | M6 — Backend and polish (weeks 11–14) | Auth, cloud presets, gallery, a11y, perf tuning | NFRs met; beta launch |
@@ -83,3 +83,12 @@ Node-based visual editor, custom GLSL snippets with sandboxing, additional scene
 - Run `npm run test:performance:soak` with `PLAYWRIGHT_BASE_URL` and `RUN_PERFORMANCE_SOAK=1` to execute the extended session. The scheduled/manual GitHub Actions workflow runs it against the deployed app and uploads a JSON report.
 - CI's default FPS floor is intentionally conservative because hosted headless-browser performance is not comparable to a user's GPU. Use `AUDIOCANVAS_PERF_MIN_FPS=50 npm run test:performance` on a reference device for a stricter 50 FPS floor; 60 FPS remains the target.
 - Chromium heap samples, DOM node count, and Three.js geometry/texture counters are trend indicators. Browser APIs do not expose a reliable cross-device GPU-VRAM number, so hosted CI does not certify actual GPU memory or 60 FPS on a physical device.
+
+
+## 6.8 Quest 2 — Audio Mapping MVP
+
+- The Studio mapping panel provides per-scene mappings from Bass, Mid, Treble, Overall level, or Beat trigger to targets declared by that scene's parameter schema.
+- Each mapping has an enable switch, invert option, 0–200% intensity, 0–100% smoothing, and remove action. Add mapping and reset defaults are available; mappings persist in browser localStorage per scene.
+- The renderer evaluates mappings in its existing animation loop using reusable smoothing values; raw audio frames stay outside React state.
+- Unit checks cover source extraction, intensity, invert, disabled mappings, clamping and smoothing. Playwright covers editor interactions, persistence, per-scene target schemas and live renderer mapping diagnostics.
+- The MVP is local-first. Cross-device/cloud sync, custom themes, effects/post-processing, undo/redo and shareable presets are not part of this increment.

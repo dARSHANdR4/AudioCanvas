@@ -541,3 +541,37 @@ button:disabled { cursor: not-allowed; opacity: 0.58; }
 @media (max-height: 760px) {
   .scene-card-list { max-height: calc(100vh - 190px); }
 }
+
+
+/* M3 Audio Mapping MVP */
+.audio-mapping-panel { min-width: 0; }
+.mapping-live-bands { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px 12px; margin: 0 0 15px; padding: 11px; border: 1px solid rgba(160,160,192,.12); border-radius: 7px; background: rgba(10,10,18,.38); }
+.mapping-live-band { min-width: 0; }
+.mapping-live-band__label { display: flex; justify-content: space-between; gap: 5px; margin-bottom: 5px; color: #9292af; font-size: 8px; }
+.mapping-live-band__label span:last-child { color: #d9d9eb; font-family: var(--font-mono); }
+.mapping-live-band__track { height: 3px; overflow: hidden; border-radius: 99px; background: #2c2c40; }
+.mapping-live-band__fill { display: block; height: 100%; border-radius: inherit; transition: width .12s linear; }
+.mapping-live-band__fill--cyan { background: var(--cyan); }
+.mapping-live-band__fill--purple { background: #a48dff; }
+.mapping-live-band__fill--pink { background: var(--pink); }
+.mapping-live-band__fill--orange { background: #ffb86b; }
+.mapping-editor { min-width: 0; padding: 11px; border: 1px solid var(--border); border-radius: 7px; background: rgba(10,10,18,.42); }
+.mapping-editor__header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 11px; }
+.mapping-remove { display: grid; place-items: center; width: 23px; height: 23px; border: 1px solid var(--border); border-radius: 5px; color: #adadc6; background: transparent; font-size: 17px; line-height: 1; cursor: pointer; }
+.mapping-remove:hover { color: var(--pink); border-color: rgba(255,43,214,.45); }
+.mapping-field { display: flex; flex-direction: column; gap: 5px; margin: 8px 0; color: #9292af; font-size: 9px; }
+.mapping-field select { width: 100%; min-width: 0; padding: 8px 24px 8px 8px; border: 1px solid var(--border); border-radius: 5px; color: #dedeee; background: #151522; font: inherit; font-size: 10px; }
+.mapping-field select:focus-visible, .mapping-range input:focus-visible { outline: 2px solid var(--cyan); outline-offset: 2px; }
+.mapping-range { margin-top: 12px; }
+.mapping-range label { display: flex; justify-content: space-between; align-items: center; gap: 7px; color: #9292af; font-size: 9px; }
+.mapping-range label strong { color: #d9d9eb; font-family: var(--font-mono); font-size: 9px; font-weight: 500; }
+.mapping-range input[type="range"] { display: block; width: 100%; margin: 9px 0 2px; accent-color: var(--cyan); cursor: pointer; }
+.mapping-editor__toggles { display: flex; gap: 14px; padding-top: 9px; margin-top: 10px; border-top: 1px solid rgba(160,160,192,.1); }
+.mapping-editor__toggles label { display: flex; align-items: center; gap: 5px; color: #adadc6; font-size: 9px; cursor: pointer; }
+.mapping-editor__toggles input { accent-color: var(--cyan); }
+.mapping-panel-actions { display: grid; gap: 7px; margin-top: 12px; }
+.mapping-panel-actions .button { min-height: 34px; }
+.audio-mapping-panel .fine-print { margin-top: 12px; }
+@media (prefers-reduced-motion: reduce) {
+  .mapping-live-band__fill { transition: none; }
+}
