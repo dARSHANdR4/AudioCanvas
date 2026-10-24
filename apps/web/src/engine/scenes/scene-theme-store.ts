@@ -80,7 +80,7 @@ export function getSceneThemePresetId(sceneId: SceneId): SceneThemePresetId {
   return selections[sceneId] ?? DEFAULT_SCENE_THEME_PRESET_ID;
 }
 
-export function getDefaultSceneThemePresetId(_sceneId: SceneId): SceneThemePresetId {
+export function getDefaultSceneThemePresetId(): SceneThemePresetId {
   return DEFAULT_SCENE_THEME_PRESET_ID;
 }
 
