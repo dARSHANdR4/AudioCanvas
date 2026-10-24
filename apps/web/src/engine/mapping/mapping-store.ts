@@ -78,6 +78,7 @@ function normalizeMappings(values: unknown): AudioMapping[] {
 }
 
 const listeners = new Set<MappingListener>();
+const SERVER_DEFAULT_MAPPINGS = createDefaultMappings();
 let mappingsByScene = createDefaultMappings();
 let initialized = false;
 
@@ -112,6 +113,7 @@ export function initializeAudioMappings(): MappingCollection {
       if (Array.isArray(candidate[sceneId])) next[sceneId] = normalizeMappings(candidate[sceneId]);
     }
     mappingsByScene = next;
+    for (const sceneId of Object.keys(next) as SceneId[]) notify(sceneId);
   } catch {
     // Malformed local data must never prevent the Studio from opening.
   }
@@ -120,6 +122,10 @@ export function initializeAudioMappings(): MappingCollection {
 
 export function getAudioMappingsForScene(sceneId: SceneId): readonly AudioMapping[] {
   return mappingsByScene[sceneId];
+}
+
+export function getDefaultAudioMappingsForScene(sceneId: SceneId): readonly AudioMapping[] {
+  return SERVER_DEFAULT_MAPPINGS[sceneId];
 }
 
 export function subscribeToAudioMappings(listener: MappingListener): () => void {
