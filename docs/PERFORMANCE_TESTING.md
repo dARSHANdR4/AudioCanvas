@@ -36,7 +36,7 @@ For a local/manual run against a deployed URL:
 PLAYWRIGHT_BASE_URL=https://audiocanvas-darshandr4s-projects.vercel.app RUN_PERFORMANCE_SOAK=1 PERFORMANCE_SOAK_MINUTES=30 npm run test:performance:soak
 ```
 
-The soak plays/restarts the demo track, changes scenes periodically, and captures Chromium JS heap/DOM node samples plus Three.js geometry/texture counters. The test returns to the starting scene to compare resource counts, applies generous memory growth guardrails, and attaches `memory-resource-soak-report.json`.
+The soak plays/restarts the demo track, changes scenes periodically, and captures Chromium JS heap/DOM node samples plus Three.js geometry/texture counters. The test returns to the starting scene to compare resource counts and applies generous memory-growth guardrails. It writes `memory-resource-soak-report.json` to disk and attaches it to the Playwright result so GitHub Actions can upload it as an artifact.
 
 ### What the counters prove—and what they do not
 

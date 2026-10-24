@@ -57,5 +57,5 @@ jobs:
         with:
           name: audiocanvas-performance-soak-${{ github.run_number }}
           path: test-results/performance/
-          if-no-files-found: warn
+          if-no-files-found: error
           retention-days: 30
