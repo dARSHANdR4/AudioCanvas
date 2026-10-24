@@ -28,12 +28,12 @@ A browser-based visualizer studio concept for turning music into color, motion, 
 
 > **Project type:** Browser-based visualizer studio  
 > **Builder:** [dARSHANdR4](https://github.com/dARSHANdR4)  
-> **Current milestone:** M2 — Render Core (in progress)  
+> **Current milestone:** M3 — Audio Mapping MVP (in progress)  
 > **Build philosophy:** Useful first. Reliable always. Keep shipping.
 
 AudioCanvas is an early-stage project for creating a no-code, sound-reactive visualizer experience. The long-term idea is to let people shape visuals with audio, scene choices, mappings, and effects — without writing shaders.
 
-**Current status, clearly:** M0 and M1 are complete. M2 now offers seven selectable Three.js visualization styles—Radial Wave Disk, Particle Vortex, Synthwave Tunnel, Oscilloscope Ribbon, Spectrogram Waterfall, Kaleidoscope Mandala, and Liquid Orb—with shared live audio data, time-domain waveform samples, scene cleanup, and adaptive quality. CI verifies scene switching and audio continuity; reference-device 60 FPS verification remains pending. The roadmap below separates working features from planned work.
+**Current status, clearly:** M0 and M1 are complete; M2 offers seven selectable Three.js visualization styles with shared live audio data, cleanup, adaptive quality, and verified long-session browser resource stability. The M3 Audio Mapping MVP adds per-scene Bass/Mid/Treble/Level/Beat mappings with live intensity, smoothing, invert, enable, and browser-local persistence. Real-device 60 FPS remains a separate benchmark from hosted CI.
 
 ## 🟩 LIVE BUILD
 
@@ -56,7 +56,7 @@ AudioCanvas is an early-stage project for creating a no-code, sound-reactive vis
 - **M1 audio workbench:** local MP3/WAV/FLAC/OGG/M4A decode (up to 100 MB), drag-and-drop, a 32-second deterministic browser-generated demo groove (a seamless 8-second pattern repeated four times), play/pause, seekable timeline and waveform preview.
 - **Microphone input:** gesture-gated permission request, human-readable permission errors, optional input-device selection, and no microphone-to-speaker routing.
 - **Live analysis:** configurable FFT size (256/512/1024/2048), Bass/Mid/Treble/Level meters, smoothing, rolling auto-gain and onset/beat detection using reusable typed arrays outside React state.
-- **M2 visual library:** managed Three.js/WebGL2 renderer and seven distinct scenes: Radial Wave Disk, GPU-shader Particle Vortex, Synthwave Tunnel, Oscilloscope Ribbon, Spectrogram Waterfall, Kaleidoscope Mandala, and Liquid Orb. The waveform scene uses real time-domain samples; the waterfall keeps recent frequency history. Scene switching preserves playback and disposes old scene resources. Reference-device performance and long-session GPU checks remain pending.
+- **M2 visual library:** managed Three.js/WebGL2 renderer and seven distinct scenes: Radial Wave Disk, GPU-shader Particle Vortex, Synthwave Tunnel, Oscilloscope Ribbon, Spectrogram Waterfall, Kaleidoscope Mandala, and Liquid Orb. Scene switching preserves playback and disposes old scene resources. The 30-minute hosted browser soak passed; reference-device FPS/GPU-VRAM certification remains distinct.
 - **Quality gates** for linting, strict TypeScript, unit tests, production builds, and Playwright smoke tests.
 - **Project documentation** covering product requirements, UX, architecture, engineering decisions, and the test roadmap.
 
@@ -70,8 +70,8 @@ Audio input/analysis and seven selectable visual styles are wired into the Studi
 |---|---|---|
 | **M0 · Shell** | Repository, responsive routes, design tokens, docs, CI, smoke tests, deployment | ✅ Complete |
 | **M1 · Audio core** | Audio upload/microphone, analyser, frequency bands, beat detection, timeline and demo track | ✅ Complete — CI and live smoke test passed |
-| **M2 · Render core** | Three.js renderer, seven visualization styles and scene switching | 🟡 In progress — seven scenes and switching; reference-device 60 FPS validation pending |
-| **M3 · Customization** | Audio-to-visual mappings, themes, effects, undo/redo | 🧭 Planned |
+| **M2 · Render core** | Three.js renderer, seven visualization styles and scene switching | 🟢 Hosted 30-minute resource soak passed; reference-device FPS remains a separate check |
+| **M3 · Customization** | Audio-to-visual mappings, themes, effects, undo/redo | 🟡 Mapping MVP in progress — per-scene audio mappings are under CI validation |
 | **M4 · Presets** | Local presets and shareable URLs | 🧭 Planned |
 | **M5 · Export** | Browser-based video export and progress/cancel flow | 🧭 Planned |
 | **M6 · Backend** | Authentication, cloud presets, gallery APIs, storage | 🧭 Planned |
