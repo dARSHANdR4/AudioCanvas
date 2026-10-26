@@ -11,9 +11,15 @@ import {
   getCameraPreferencesSnapshot,
   getDefaultCameraPreferencesSnapshot,
   getDefaultSceneCameraProfileSnapshot,
+  getDefaultSceneCameraCompositionsSnapshot,
+  getSceneCameraCompositionsSnapshot,
+  getSceneCameraProfile,
   getSceneCameraProfileSnapshot,
   subscribeToCameraStudioSettings,
   setCameraPreferences,
+  saveNamedCameraComposition,
+  deleteNamedCameraComposition,
+  MAX_NAMED_CAMERA_COMPOSITIONS,
 } from '@/engine/scenes/camera-profile-store';
 import { getSelectedScene, subscribeToSceneSelection } from '@/engine/scenes/scene-selection-store';
 import { SCENE_OPTIONS, type SceneId } from '@/engine/scenes/scene-registry';
@@ -41,6 +47,8 @@ interface PanelPosition {
 
 export function CameraStudio() {
   const [open, setOpen] = useState(false);
+  const [compositionName, setCompositionName] = useState('');
+  const [compositionError, setCompositionError] = useState<string | null>(null);
   const triggerRef = useRef<HTMLButtonElement>(null);
   const objectAxesRef = useRef<HTMLDivElement>(null);
   const scrollBodyRef = useRef<HTMLDivElement>(null);
@@ -60,6 +68,11 @@ export function CameraStudio() {
     subscribeToCameraSettings,
     () => getSceneCameraProfileSnapshot(activeSceneId),
     getDefaultSceneCameraProfileSnapshot,
+  );
+  const compositions = useSyncExternalStore(
+    subscribeToCameraSettings,
+    () => getSceneCameraCompositionsSnapshot(activeSceneId),
+    getDefaultSceneCameraCompositionsSnapshot,
   );
   const preferences = useSyncExternalStore(
     subscribeToCameraSettings,
@@ -121,6 +134,32 @@ export function CameraStudio() {
   const resetView = () => {
     // Reset only this visualization's view; global input preferences remain unchanged.
     dispatchCameraCommand({ type: 'reset' });
+  };
+
+  const saveComposition = () => {
+    const name = compositionName.trim();
+    if (name.length === 0) return;
+    if (compositions.some((item) => item.name.toLowerCase() === name.toLowerCase())) {
+      setCompositionError('A saved view with this name already exists for this scene.');
+      return;
+    }
+    const saved = saveNamedCameraComposition(activeSceneId, name, getSceneCameraProfile(activeSceneId));
+    if (saved === null) {
+      setCompositionError('Could not save this view. Each scene can store up to 12 named views.');
+      return;
+    }
+    setCompositionName('');
+    setCompositionError(null);
+  };
+
+  const loadComposition = (composition: (typeof compositions)[number]) => {
+    dispatchCameraCommand({ type: 'restore-profile', profile: composition.profile });
+    setCompositionError(null);
+  };
+
+  const removeComposition = (compositionId: string) => {
+    deleteNamedCameraComposition(activeSceneId, compositionId);
+    setCompositionError(null);
   };
 
   const jumpToAxes = () => {
@@ -208,6 +247,70 @@ export function CameraStudio() {
                   </button>
                 ))}
               </div>
+            </div>
+
+            <div className={styles.section}>
+              <div className={styles.sectionHeading}>
+                <span>SAVED COMPOSITIONS</span>
+                <span>{compositions.length}/{MAX_NAMED_CAMERA_COMPOSITIONS} SAVED</span>
+              </div>
+              <form
+                className={styles.compositionForm}
+                onSubmit={(event) => {
+                  event.preventDefault();
+                  saveComposition();
+                }}
+              >
+                <input
+                  aria-label="Composition name"
+                  autoComplete="off"
+                  className={styles.compositionNameInput}
+                  maxLength={40}
+                  onChange={(event) => {
+                    setCompositionName(event.currentTarget.value);
+                    setCompositionError(null);
+                  }}
+                  placeholder="e.g. Vortex close-up"
+                  value={compositionName}
+                />
+                <button
+                  className={styles.saveComposition}
+                  disabled={!compositionName.trim() || compositions.length >= MAX_NAMED_CAMERA_COMPOSITIONS}
+                  type="submit"
+                >
+                  Save view
+                </button>
+              </form>
+              {compositionError !== null && <p className={styles.compositionError} role="alert">{compositionError}</p>}
+              {compositions.length === 0 ? (
+                <p className={styles.emptyComposition}>No saved views for this scene yet.</p>
+              ) : (
+                <ul className={styles.compositionList}>
+                  {compositions.map((composition) => (
+                    <li className={styles.compositionItem} key={composition.id}>
+                      <span className={styles.compositionTitle} title={composition.name}>{composition.name}</span>
+                      <div className={styles.compositionActions}>
+                        <button
+                          aria-label={'Load ' + composition.name}
+                          className={styles.compositionAction}
+                          onClick={() => loadComposition(composition)}
+                          type="button"
+                        >
+                          Load
+                        </button>
+                        <button
+                          aria-label={'Delete ' + composition.name}
+                          className={styles.compositionActionDelete}
+                          onClick={() => removeComposition(composition.id)}
+                          type="button"
+                        >
+                          Delete
+                        </button>
+                      </div>
+                    </li>
+                  ))}
+                </ul>
+              )}
             </div>
 
             <div className={styles.section}>

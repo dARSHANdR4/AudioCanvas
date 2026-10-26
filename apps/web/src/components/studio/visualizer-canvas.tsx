@@ -164,9 +164,8 @@ export function VisualizerCanvas() {
       persistCameraStudioSettings();
     };
 
-    const restoreCameraProfile = (sceneId: SceneId) => {
+    const applyCameraProfile = (profile: SceneCameraProfile) => {
       if (activeSceneCamera === null || cameraControls === null || renderStage === null) return;
-      const profile = getSceneCameraProfile(sceneId);
       suppressCameraProfileSync = true;
       try {
         cameraControls.reset();
@@ -190,6 +189,10 @@ export function VisualizerCanvas() {
       } finally {
         suppressCameraProfileSync = false;
       }
+    };
+
+    const restoreCameraProfile = (sceneId: SceneId) => {
+      applyCameraProfile(getSceneCameraProfile(sceneId));
     };
 
     const handleSafetySettingsChange = (nextSettings: SafetySettings) => {
@@ -253,6 +256,10 @@ export function VisualizerCanvas() {
       if (cameraControls === null || activeSceneCamera === null) return;
 
       switch (command.type) {
+        case 'restore-profile':
+          applyCameraProfile(command.profile);
+          setSceneCameraProfile(getSelectedScene(), command.profile, true, true);
+          break;
         case 'preset':
           applyCameraPreset(command.preset);
           captureCameraProfile(getSelectedScene(), true);

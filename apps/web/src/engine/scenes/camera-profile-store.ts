@@ -1,26 +1,21 @@
-import type { CameraPreset, CameraToggle, ObjectAxis } from './camera-controls-store';
+import type { CameraPreset, CameraProfileSnapshot, CameraToggle } from './camera-controls-store';
 import type { SceneId } from './scene-registry';
 
 export type CameraProfilePreset = CameraPreset | 'custom';
 
-export interface CameraVector {
-  x: number;
-  y: number;
-  z: number;
-}
-
-export interface SceneCameraProfile {
-  preset: CameraProfilePreset;
-  position: CameraVector;
-  target: CameraVector;
-  up: CameraVector;
-  rollDegrees: number;
-  objectRotationDegrees: Record<ObjectAxis, number>;
-}
+export type CameraVector = CameraProfileSnapshot['position'];
+export type SceneCameraProfile = CameraProfileSnapshot;
 
 export interface CameraPreferences {
   sensitivity: number;
   enabled: Record<CameraToggle, boolean>;
+}
+
+export interface NamedCameraComposition {
+  id: string;
+  name: string;
+  createdAt: number;
+  profile: SceneCameraProfile;
 }
 
 type CameraPreferencePatch = Partial<Omit<CameraPreferences, 'enabled'>> & {
@@ -39,6 +34,8 @@ const SCENE_IDS: readonly SceneId[] = [
 
 const CAMERA_PRESETS: readonly CameraPreset[] = ['front', 'side', 'top', 'low-angle', 'cinematic'];
 export const CAMERA_STUDIO_STORAGE_KEY = 'audiocanvas.camera-studio.v1';
+export const MAX_NAMED_CAMERA_COMPOSITIONS = 12;
+const MAX_COMPOSITION_NAME_LENGTH = 40;
 
 function createDefaultProfile(): SceneCameraProfile {
   return {
@@ -55,6 +52,10 @@ function createDefaultProfiles(): Record<SceneId, SceneCameraProfile> {
   return Object.fromEntries(SCENE_IDS.map((sceneId) => [sceneId, createDefaultProfile()])) as Record<SceneId, SceneCameraProfile>;
 }
 
+function createDefaultCompositions(): Record<SceneId, NamedCameraComposition[]> {
+  return Object.fromEntries(SCENE_IDS.map((sceneId) => [sceneId, [] as NamedCameraComposition[]])) as Record<SceneId, NamedCameraComposition[]>;
+}
+
 function createDefaultPreferences(): CameraPreferences {
   return { sensitivity: 1, enabled: { rotate: true, pan: true, zoom: true } };
 }
@@ -67,6 +68,10 @@ function cloneProfile(profile: SceneCameraProfile): SceneCameraProfile {
     up: { ...profile.up },
     objectRotationDegrees: { ...profile.objectRotationDegrees },
   };
+}
+
+function cloneComposition(composition: NamedCameraComposition): NamedCameraComposition {
+  return { ...composition, profile: cloneProfile(composition.profile) };
 }
 
 function clonePreferences(preferences: CameraPreferences): CameraPreferences {
@@ -116,6 +121,24 @@ function normalizeProfile(value: unknown, fallback: SceneCameraProfile): SceneCa
   };
 }
 
+function normalizeComposition(value: unknown, fallback: SceneCameraProfile): NamedCameraComposition | null {
+  if (!isRecord(value) || typeof value.id !== 'string' || typeof value.name !== 'string' || !isRecord(value.profile)) {
+    return null;
+  }
+  const id = value.id.trim();
+  const name = value.name.trim().slice(0, MAX_COMPOSITION_NAME_LENGTH);
+  const createdAt = finiteNumber(value.createdAt, Number.NaN);
+  if (id.length === 0 || name.length === 0 || !Number.isFinite(createdAt)) return null;
+  return { id, name, createdAt, profile: normalizeProfile(value.profile, fallback) };
+}
+
+function createCompositionId(): string {
+  const uniquePart = typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function'
+    ? crypto.randomUUID()
+    : String(Date.now()) + '-' + Math.random().toString(36).slice(2, 10);
+  return 'camera-' + uniquePart;
+}
+
 function normalizePreferences(value: unknown, fallback: CameraPreferences): CameraPreferences {
   if (!isRecord(value)) return clonePreferences(fallback);
   const rawEnabled = isRecord(value.enabled) ? value.enabled : {};
@@ -131,10 +154,12 @@ function normalizePreferences(value: unknown, fallback: CameraPreferences): Came
 
 let profiles = createDefaultProfiles();
 let preferences = createDefaultPreferences();
+let compositions = createDefaultCompositions();
 let initialized = false;
 const settingsListeners = new Set<() => void>();
 const DEFAULT_PROFILE_SNAPSHOT = createDefaultProfile();
 const DEFAULT_PREFERENCES_SNAPSHOT = createDefaultPreferences();
+const DEFAULT_NAMED_COMPOSITIONS_SNAPSHOT: readonly NamedCameraComposition[] = Object.freeze([]);
 
 function notifySettingsChanged(): void {
   settingsListeners.forEach((listener) => listener());
@@ -143,7 +168,7 @@ function notifySettingsChanged(): void {
 function persist(): void {
   if (typeof window === 'undefined') return;
   try {
-    window.localStorage.setItem(CAMERA_STUDIO_STORAGE_KEY, JSON.stringify({ profiles, preferences }));
+    window.localStorage.setItem(CAMERA_STUDIO_STORAGE_KEY, JSON.stringify({ profiles, preferences, compositions }));
   } catch {
     // Keep Camera Studio usable for this session when local storage is unavailable.
   }
@@ -165,8 +190,25 @@ export function initializeCameraStudioSettings(): void {
     for (const sceneId of SCENE_IDS) {
       nextProfiles[sceneId] = normalizeProfile(storedProfiles[sceneId], nextProfiles[sceneId]);
     }
+    const nextCompositions = createDefaultCompositions();
+    const storedCompositions = isRecord(parsed.compositions) ? parsed.compositions : {};
+    for (const sceneId of SCENE_IDS) {
+      const storedForScene = storedCompositions[sceneId];
+      if (!Array.isArray(storedForScene)) continue;
+      for (const item of storedForScene) {
+        if (nextCompositions[sceneId].length >= MAX_NAMED_CAMERA_COMPOSITIONS) break;
+        const normalized = normalizeComposition(item, nextProfiles[sceneId]);
+        if (normalized === null) continue;
+        const duplicateName = nextCompositions[sceneId].some(
+          (existing) => existing.name.toLowerCase() === normalized.name.toLowerCase(),
+        );
+        if (!duplicateName) nextCompositions[sceneId].push(normalized);
+      }
+    }
+
     profiles = nextProfiles;
     preferences = normalizePreferences(parsed.preferences, createDefaultPreferences());
+    compositions = nextCompositions;
     notifySettingsChanged();
   } catch {
     // Malformed or unavailable local data must not prevent the Studio from opening.
@@ -217,6 +259,60 @@ export function resetSceneCameraProfile(sceneId: SceneId): SceneCameraProfile {
   const profile = createDefaultProfile();
   setSceneCameraProfile(sceneId, profile);
   return cloneProfile(profile);
+}
+
+export function getSceneCameraCompositions(sceneId: SceneId): NamedCameraComposition[] {
+  initializeCameraStudioSettings();
+  return (compositions[sceneId] ?? []).map(cloneComposition);
+}
+
+/** Stable composition snapshot for React's useSyncExternalStore. */
+export function getSceneCameraCompositionsSnapshot(sceneId: SceneId): readonly NamedCameraComposition[] {
+  return compositions[sceneId] ?? DEFAULT_NAMED_COMPOSITIONS_SNAPSHOT;
+}
+
+export function getDefaultSceneCameraCompositionsSnapshot(): readonly NamedCameraComposition[] {
+  return DEFAULT_NAMED_COMPOSITIONS_SNAPSHOT;
+}
+
+/** Save a reusable snapshot for only the requested scene. Returns null for invalid/duplicate names or the per-scene limit. */
+export function saveNamedCameraComposition(
+  sceneId: SceneId,
+  name: string,
+  profile?: SceneCameraProfile,
+): NamedCameraComposition | null {
+  initializeCameraStudioSettings();
+  const normalizedName = name.trim().slice(0, MAX_COMPOSITION_NAME_LENGTH);
+  const sceneCompositions = compositions[sceneId] ?? [];
+  if (
+    normalizedName.length === 0 ||
+    sceneCompositions.length >= MAX_NAMED_CAMERA_COMPOSITIONS ||
+    sceneCompositions.some((item) => item.name.toLowerCase() === normalizedName.toLowerCase())
+  ) {
+    return null;
+  }
+
+  const composition: NamedCameraComposition = {
+    id: createCompositionId(),
+    name: normalizedName,
+    createdAt: Date.now(),
+    profile: normalizeProfile(profile ?? profiles[sceneId] ?? createDefaultProfile(), createDefaultProfile()),
+  };
+  compositions = { ...compositions, [sceneId]: [...sceneCompositions, composition] };
+  persist();
+  notifySettingsChanged();
+  return cloneComposition(composition);
+}
+
+export function deleteNamedCameraComposition(sceneId: SceneId, compositionId: string): boolean {
+  initializeCameraStudioSettings();
+  const current = compositions[sceneId] ?? [];
+  const next = current.filter((item) => item.id !== compositionId);
+  if (next.length === current.length) return false;
+  compositions = { ...compositions, [sceneId]: next };
+  persist();
+  notifySettingsChanged();
+  return true;
 }
 
 export function getCameraPreferences(): CameraPreferences {
