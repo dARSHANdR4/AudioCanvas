@@ -171,3 +171,62 @@ test('camera profiles stay isolated per scene and persist across reloads', async
   expect(profilesAfterReset?.profiles['radial-wave-disk']).toMatchObject({ preset: 'front', objectRotationDegrees: { z: 0 } });
   expect(profilesAfterReset?.profiles['particle-vortex']).toMatchObject({ preset: 'top', objectRotationDegrees: { z: 180 } });
 });
+
+test('named camera compositions save, load, delete and stay scoped to their scene', async ({ page }) => {
+  await page.addInitScript(() => {
+    try {
+      localStorage.removeItem('audiocanvas.camera-studio.v1');
+      localStorage.setItem('audiocanvas.photosensitivity-acknowledged.v1', 'true');
+    } catch {
+      // Ignore opaque-origin storage before navigation.
+    }
+  });
+
+  await page.goto('/studio');
+  const canvas = page.locator('.visualizer-canvas');
+  await expect(canvas).toHaveAttribute('data-render-status', 'ready');
+  await page.getByRole('button', { name: 'Camera Studio' }).click();
+  const panel = page.getByRole('dialog', { name: 'Camera Studio controls' });
+  const nameInput = panel.getByRole('textbox', { name: 'Composition name' });
+
+  await panel.getByRole('button', { name: 'Side view' }).click();
+  const xAxis = panel.getByRole('slider', { name: 'Object X axis' });
+  await xAxis.focus();
+  await page.keyboard.press('End');
+  await nameInput.fill('Radial side framing');
+  await panel.getByRole('button', { name: 'Save view' }).click();
+  await expect(panel.getByRole('button', { name: 'Load Radial side framing' })).toBeVisible();
+
+  await page.getByRole('button', { name: 'Switch to Particle Vortex' }).click();
+  await expect(canvas).toHaveAttribute('data-scene', 'particle-vortex');
+  await expect(panel.getByRole('button', { name: 'Load Radial side framing' })).toHaveCount(0);
+  await panel.getByRole('button', { name: 'Top view' }).click();
+  await nameInput.fill('Particle top framing');
+  await panel.getByRole('button', { name: 'Save view' }).click();
+  await expect(panel.getByRole('button', { name: 'Load Particle top framing' })).toBeVisible();
+
+  await page.getByRole('button', { name: 'Switch to Radial Wave Disk' }).click();
+  await expect(panel.getByRole('button', { name: 'Load Radial side framing' })).toBeVisible();
+  await expect(panel.getByRole('button', { name: 'Load Particle top framing' })).toHaveCount(0);
+  await panel.getByRole('button', { name: 'Front view' }).click();
+  await panel.getByRole('button', { name: 'Load Radial side framing' }).click();
+  await expect(canvas).toHaveAttribute('data-camera-preset', 'side');
+  await expect(canvas).toHaveAttribute('data-object-axis-x', '180');
+
+  await page.reload();
+  await expect(page.locator('.visualizer-canvas')).toHaveAttribute('data-render-status', 'ready');
+  await expect(page.locator('.visualizer-canvas')).toHaveAttribute('data-camera-preset', 'side');
+  await expect(page.locator('.visualizer-canvas')).toHaveAttribute('data-object-axis-x', '180');
+  await page.getByRole('button', { name: 'Camera Studio' }).click();
+  const reopenedPanel = page.getByRole('dialog', { name: 'Camera Studio controls' });
+  await expect(reopenedPanel.getByRole('button', { name: 'Load Radial side framing' })).toBeVisible();
+  await reopenedPanel.getByRole('button', { name: 'Delete Radial side framing' }).click();
+  await expect(reopenedPanel.getByRole('button', { name: 'Load Radial side framing' })).toHaveCount(0);
+  const storage = await page.evaluate(() => {
+    const raw = localStorage.getItem('audiocanvas.camera-studio.v1');
+    return raw ? JSON.parse(raw) as { compositions: Record<string, Array<{ name: string }>> } : null;
+  });
+  expect(storage?.compositions['radial-wave-disk']).toHaveLength(0);
+  expect(storage?.compositions['particle-vortex']).toHaveLength(1);
+  expect(storage?.compositions['particle-vortex'][0]?.name).toBe('Particle top framing');
+});

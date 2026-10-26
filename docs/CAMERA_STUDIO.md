@@ -16,11 +16,13 @@ Camera Studio controls the viewing perspective and object rotation for AudioCanv
 - Rotate, pan and zoom toggles: global preferences that temporarily disable individual interactions.
 - Object X / Y / Z rotation: rotate the active visualization independently from its camera viewpoint.
 - Reset view: restore the current scene's canonical front camera, zero roll, and neutral X/Y/Z object rotation. Global sensitivity and input toggles are intentionally preserved.
+- Named compositions: save the current camera pose and object rotation under a custom name, then load or delete it from the active scene's Saved Compositions section. Names are limited to 40 characters and each scene can store up to 12 views.
 
 ## Persistence and implementation notes
 
 - Camera position, OrbitControls target (including pan), camera up vector, selected preset/custom state, roll, and object X/Y/Z rotation are stored independently for each scene.
-- Scene profiles and global interaction preferences are stored locally under `audiocanvas.camera-studio.v1`. Storage is browser-local and does not sync across devices.
+- Named compositions are immutable snapshots of that full view state, saved and managed independently per scene. Loading a composition applies it to the active scene's current profile without deleting the saved snapshot.
+- Scene profiles, named compositions and global interaction preferences are stored locally under `audiocanvas.camera-studio.v1`. Storage is browser-local and does not sync across devices.
 - OrbitControls change events update the active profile in memory and flush to localStorage after interaction settles; explicit preset, roll, axis, reset and scene-switch changes are saved immediately.
 - Scene switching snapshots the outgoing profile before restoring the incoming one. The active scene remains in the shared Three.js stage, and audio processing is not restarted.
 - Camera profiles are not included in Save / Share / Export yet; those workflows remain separate follow-up work.

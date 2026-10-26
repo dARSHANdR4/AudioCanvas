@@ -186,6 +186,118 @@
   gap: 6px;
 }
 
+.compositionForm {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 6px;
+}
+
+.compositionNameInput {
+  min-width: 0;
+  width: 100%;
+  padding: 7px 8px;
+  border: 1px solid rgba(160, 160, 192, .2);
+  border-radius: 5px;
+  color: #f2f2fa;
+  background: rgba(160, 160, 192, .055);
+  font: inherit;
+  font-size: 9px;
+}
+
+.compositionNameInput:focus-visible {
+  outline: 1px solid rgba(0, 245, 255, .72);
+  border-color: rgba(0, 245, 255, .55);
+}
+
+.saveComposition,
+.compositionAction,
+.compositionActionDelete {
+  min-height: 27px;
+  padding: 5px 8px;
+  border: 1px solid rgba(0, 245, 255, .24);
+  border-radius: 5px;
+  color: #bafaff;
+  background: rgba(0, 245, 255, .055);
+  font-size: 8px;
+  font-weight: 650;
+  cursor: pointer;
+}
+
+.saveComposition:hover,
+.compositionAction:hover,
+.saveComposition:focus-visible,
+.compositionAction:focus-visible {
+  border-color: rgba(0, 245, 255, .62);
+  background: rgba(0, 245, 255, .12);
+}
+
+.saveComposition:disabled {
+  opacity: .42;
+  cursor: not-allowed;
+}
+
+.compositionError {
+  margin: 7px 0 0;
+  color: #ffb7c4;
+  font-size: 9px;
+  line-height: 1.45;
+}
+
+.emptyComposition {
+  margin: 8px 0 0;
+  color: #9292af;
+  font-size: 9px;
+  line-height: 1.45;
+}
+
+.compositionList {
+  display: grid;
+  gap: 6px;
+  margin: 9px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.compositionItem {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 7px;
+  min-width: 0;
+  padding: 6px;
+  border: 1px solid rgba(160, 160, 192, .15);
+  border-radius: 5px;
+  background: rgba(160, 160, 192, .035);
+}
+
+.compositionTitle {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  color: #d6d6e8;
+  font-size: 9px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.compositionActions {
+  display: flex;
+  flex: 0 0 auto;
+  gap: 4px;
+}
+
+.compositionActionDelete {
+  border-color: rgba(255, 105, 135, .25);
+  color: #ffb6c4;
+  background: rgba(255, 105, 135, .055);
+}
+
+.compositionActionDelete:hover,
+.compositionActionDelete:focus-visible {
+  border-color: rgba(255, 105, 135, .58);
+  background: rgba(255, 105, 135, .12);
+}
+
 .preset {
   min-height: 30px;
   padding: 6px 8px;

@@ -1,4 +1,4 @@
-import type { CameraPreset, CameraToggle, ObjectAxis } from './camera-controls-store';
+import type { CameraPreset, CameraProfileSnapshot, CameraToggle } from './camera-controls-store';
 import type { SceneId } from './scene-registry';
 
 export type CameraProfilePreset = CameraPreset | 'custom';

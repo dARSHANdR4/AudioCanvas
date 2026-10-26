@@ -1,8 +1,11 @@
 import { afterEach, describe, expect, it } from 'vitest';
 import {
+  deleteNamedCameraComposition,
   getCameraPreferences,
+  getSceneCameraCompositions,
   getSceneCameraProfile,
   resetSceneCameraProfile,
+  saveNamedCameraComposition,
   setCameraPreferences,
   setSceneCameraProfile,
 } from '../../apps/web/src/engine/scenes/camera-profile-store';
@@ -56,6 +59,43 @@ describe('per-scene camera profiles', () => {
       preset: 'top',
       objectRotationDegrees: { z: 70 },
     });
+  });
+
+  it('saves immutable named snapshots for a single scene and can delete them', () => {
+    const profile = getSceneCameraProfile('radial-wave-disk');
+    const customProfile = {
+      ...profile,
+      preset: 'custom' as const,
+      position: { x: 6.5, y: 2.25, z: 8.1 },
+      target: { x: 0.4, y: -0.3, z: 0 },
+      rollDegrees: 32,
+      objectRotationDegrees: { x: 20, y: -15, z: 40 },
+    };
+    setSceneCameraProfile('radial-wave-disk', customProfile);
+
+    const saved = saveNamedCameraComposition('radial-wave-disk', 'Unit test framing');
+    if (saved === null) throw new Error('Expected the named composition to save.');
+    expect(saved.profile).toMatchObject({
+      preset: 'custom',
+      position: { x: 6.5, y: 2.25, z: 8.1 },
+      target: { x: 0.4, y: -0.3, z: 0 },
+      rollDegrees: 32,
+      objectRotationDegrees: { x: 20, y: -15, z: 40 },
+    });
+
+    setSceneCameraProfile('radial-wave-disk', {
+      ...profile,
+      preset: 'front',
+      position: { x: 0, y: 0, z: 10.3 },
+    });
+    expect(getSceneCameraCompositions('radial-wave-disk')[0]?.profile).toMatchObject({
+      preset: 'custom',
+      position: { x: 6.5, y: 2.25, z: 8.1 },
+    });
+    expect(getSceneCameraCompositions('particle-vortex')).toHaveLength(0);
+    expect(saveNamedCameraComposition('radial-wave-disk', 'unit TEST framing')).toBeNull();
+    expect(deleteNamedCameraComposition('radial-wave-disk', saved.id)).toBe(true);
+    expect(getSceneCameraCompositions('radial-wave-disk')).toHaveLength(0);
   });
 
   it('persists interaction sensitivity and toggles as global preferences', () => {

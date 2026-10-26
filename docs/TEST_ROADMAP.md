@@ -33,6 +33,7 @@
 | TC-15 | Safety controls | Flash limiter and Reduced Motion change renderer state, affect the processed audio frame, and persist after reload |
 | TC-16 | Hidden-tab rendering | When the document is hidden, scene updates and GPU rendering are skipped; rendering resumes when visible without a large catch-up time step |
 | TC-17 | Per-scene camera profiles | Each scene restores its own camera pose, roll and object rotation; profiles persist after reload; resetting one scene does not reset another |
+| TC-18 | Named camera compositions | Save, load and delete a named full camera view; saved views persist after reload and remain isolated by scene |
 
 ## 6.3 Roadmap (Milestones)
 
@@ -109,3 +110,10 @@ Node-based visual editor, custom GLSL snippets with sandboxing, additional scene
 - Camera position, OrbitControls target/pan, up vector, roll and object X/Y/Z rotation persist independently for each visualization in browser localStorage.
 - Sensitivity and rotate/pan/zoom enable toggles remain global interaction preferences.
 - Camera Studio unit and Playwright checks validate scene isolation, reset scope, and reload persistence. Save/Share/Export integration remains deferred.
+
+## 6.11 Quest 3 — Named Camera Compositions
+
+- Camera Studio can save up to 12 named snapshots per visualization. Each snapshot includes camera position, OrbitControls target/pan, camera up vector, preset/custom state, roll, and object X/Y/Z rotation.
+- Saved compositions are browser-local and scene-specific. Loading applies the saved snapshot to that scene's active camera profile; deleting removes only the selected saved snapshot.
+- Unit coverage validates full-pose snapshots, duplicate-name protection, and scene isolation. Playwright verifies save/load/delete, per-scene separation, and reload persistence.
+- Save/Share/Export integration and cross-device sync remain separate follow-up work.
