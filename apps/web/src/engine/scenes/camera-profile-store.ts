@@ -53,7 +53,7 @@ function createDefaultProfiles(): Record<SceneId, SceneCameraProfile> {
 }
 
 function createDefaultCompositions(): Record<SceneId, NamedCameraComposition[]> {
-  return Object.fromEntries(SCENE_IDS.map((sceneId) => [sceneId, []])) as Record<SceneId, NamedCameraComposition[]>;
+  return Object.fromEntries(SCENE_IDS.map((sceneId) => [sceneId, [] as NamedCameraComposition[]])) as Record<SceneId, NamedCameraComposition[]>;
 }
 
 function createDefaultPreferences(): CameraPreferences {
